@@ -8,7 +8,7 @@ import javax.mail.Flags
 import javax.mail.Folder
 import javax.mail.Message
 import javax.mail.internet.InternetAddress
-import javax.mail.multipart.Multipart
+import javax.mail.internet.MimeMultipart
 import java.util.*
 import kotlin.math.max
 
@@ -112,7 +112,7 @@ object ImapMailboxManager {
         return addressesList.joinToString(", ") { addr ->
             when (addr) {
                 is InternetAddress -> {
-                    if (addr.name.isNotEmpty()) "${addr.name} <${addr.address}>"
+                    if (addr.displayName.isNotEmpty()) "${addr.displayName} <${addr.address}>"
                     else addr.address ?: ""
                 }
                 else -> addr.toString()
@@ -129,7 +129,7 @@ object ImapMailboxManager {
                 html && msg.isMimeType("text/html") -> msg.content.toString()
                 !html && msg.isMimeType("text/plain") -> msg.content.toString()
                 msg.isMimeType("multipart/*") -> {
-                    val mp = msg.content as Multipart
+                    val mp = msg.content as MimeMultipart
                     var result = ""
                     for (i in 0 until mp.count) {
                         val bodyPart = mp.getBodyPart(i)
@@ -143,7 +143,7 @@ object ImapMailboxManager {
                                 break
                             }
                             bodyPart.isMimeType("multipart/*") -> {
-                                val nestedMp = bodyPart.content as Multipart
+                                val nestedMp = bodyPart.content as MimeMultipart
                                 for (j in 0 until nestedMp.count) {
                                     val nestedPart = nestedMp.getBodyPart(j)
                                     if (nestedPart.isMimeType("text/html")) {
