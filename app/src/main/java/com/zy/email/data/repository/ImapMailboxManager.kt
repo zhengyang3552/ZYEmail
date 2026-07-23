@@ -90,7 +90,7 @@ object ImapMailboxManager {
         return EmailMessage(
             subject = msg.subject ?: "",
             from = formatAddress(msg.from),
-            to = formatAddress(msg.replyTo ?: msg.recipients(Message.RecipientType.TO)),
+            to = formatAddress(msg.getRecipients(Message.RecipientType.TO)),
             date = msg.sentDate,
             bodyText = getTextContent(msg, false),
             bodyHtml = getTextContent(msg, true),
@@ -109,7 +109,7 @@ object ImapMailboxManager {
         
         return addressesList.joinToString(", ") { addr ->
             when (addr) {
-                is jakarta.mail.internet.InternetAddress -> {
+                is javax.mail.internet.InternetAddress -> {
                     if (addr.name.isNotEmpty()) "${addr.name} <${addr.address}>"
                     else addr.address ?: ""
                 }
@@ -127,7 +127,7 @@ object ImapMailboxManager {
                 html && msg.isMimeType("text/html") -> msg.content.toString()
                 !html && msg.isMimeType("text/plain") -> msg.content.toString()
                 msg.isMimeType("multipart/*") -> {
-                    val mp = msg.content as jakarta.mail.multipart.Multipart
+                    val mp = msg.content as javax.mail.multipart.Multipart
                     var result = ""
                     for (i in 0 until mp.count) {
                         val bodyPart = mp.getBodyPart(i)
@@ -141,7 +141,7 @@ object ImapMailboxManager {
                                 break
                             }
                             bodyPart.isMimeType("multipart/*") -> {
-                                val nestedMp = bodyPart.content as jakarta.mail.multipart.Multipart
+                                val nestedMp = bodyPart.content as javax.mail.multipart.Multipart
                                 for (j in 0 until nestedMp.count) {
                                     val nestedPart = nestedMp.getBodyPart(j)
                                     if (nestedPart.isMimeType("text/html")) {
