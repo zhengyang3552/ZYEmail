@@ -8,6 +8,7 @@ import jakarta.mail.Flags
 import jakarta.mail.Folder
 import jakarta.mail.Message
 import java.util.*
+import kotlin.comparisons.max
 
 /**
  * IMAP邮件收取管理器
