@@ -112,7 +112,8 @@ object ImapMailboxManager {
         return addressesList.joinToString(", ") { addr ->
             when (addr) {
                 is InternetAddress -> {
-                    if (addr.displayName.isNotEmpty()) "${addr.displayName} <${addr.address}>"
+                    val displayName = addr.displayName
+                    if (!displayName.isNullOrEmpty()) "$displayName <${addr.address}>"
                     else addr.address ?: ""
                 }
                 else -> addr.toString()

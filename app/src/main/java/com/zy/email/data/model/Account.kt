@@ -1,12 +1,17 @@
 package com.zy.email.data.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 /**
  * 邮箱账户数据模型
  * 支持两种登录方式：
  * 1. SMTP/IMAP - 适用于QQ邮箱、163邮箱等（用户名+密码/授权码）
  * 2. OAuth2 - 适用于Microsoft、Google等（需要登录验证）
  */
+@Entity(tableName = "accounts")
 data class Account(
+    @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val email: String,
     val displayName: String = "",
