@@ -50,11 +50,19 @@
 
             <!-- 抄送 -->
             <LinearLayout
-                android:id="@+id/llCc"
+                android:id="@+id/ccLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvCc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="显示抄送"
+                    android:textSize="12sp"
+                    android:padding="8dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
@@ -74,11 +82,19 @@
 
             <!-- 密送 -->
             <LinearLayout
-                android:id="@+id/llBcc"
+                android:id="@+id/bccLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvBcc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="显示密送"
+                    android:textSize="12sp"
+                    android:padding="8dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"

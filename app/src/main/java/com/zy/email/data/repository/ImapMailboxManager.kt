@@ -3,10 +3,10 @@ package com.zy.email.data.repository
 import com.sun.mail.imap.IMAPFolder
 import com.sun.mail.imap.IMAPStore
 import com.zy.email.data.model.Account
-import com.zy.email.data.model.EncryptionUtils
-import jakarta.mail.Flags
-import jakarta.mail.Folder
-import jakarta.mail.Message
+import com.zy.email.utils.EncryptionUtils
+import javax.mail.Flags
+import javax.mail.Folder
+import javax.mail.Message
 import java.util.*
 import kotlin.math.max
 

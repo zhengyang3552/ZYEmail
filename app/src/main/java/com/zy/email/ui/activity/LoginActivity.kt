@@ -6,26 +6,21 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import com.zy.email.databinding.ActivityLoginBinding
+import androidx.lifecycle.lifecycleScope
+import com.zy.email.R
 import com.zy.email.data.model.Account
-import com.zy.email.data.model.AccountType
 import com.zy.email.data.model.detectAccountType
 import com.zy.email.data.model.getImapDefaults
 import com.zy.email.data.model.getSmtpDefaults
 import com.zy.email.data.repository.EmailRepository
 import com.zy.email.data.repository.LoginResult
+import com.zy.email.databinding.ActivityLoginBinding
 import com.zy.email.ui.viewmodel.LoginViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * 登录界面
- * 支持两种登录方式：
- * 1. 手动配置 - 适用于QQ/163等SMTP邮箱
- * 2. 一键登录 - 适用于Microsoft/Google等OAuth2邮箱
- */
 class LoginActivity : AppCompatActivity() {
     
     private lateinit var binding: ActivityLoginBinding
@@ -38,13 +33,10 @@ class LoginActivity : AppCompatActivity() {
         
         setupViews()
         observeLoginState()
-        
-        // 检查是否已有登录的账户
         viewModel.startAutoLogin()
     }
     
     private fun setupViews() {
-        // 邮箱地址变更时自动检测账户类型
         binding.editEmail.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) return@setOnFocusChangeListener
             val email = binding.editEmail.text.toString().trim()
@@ -54,7 +46,6 @@ class LoginActivity : AppCompatActivity() {
             }
         }
         
-        // 登录按钮
         binding.btnLogin.setOnClickListener {
             val email = binding.editEmail.text.toString().trim()
             val password = binding.editPassword.text.toString().trim()
@@ -76,33 +67,24 @@ class LoginActivity : AppCompatActivity() {
             performLogin(email, password, displayName)
         }
         
-        // 取消按钮
         binding.btnCancel.setOnClickListener {
             finish()
         }
     }
     
-    /**
-     * 根据账户类型更新UI
-     */
-    private fun updateAccountTypeUI(accountType: AccountType) {
+    private fun updateAccountTypeUI(accountType: com.zy.email.data.model.AccountType) {
         when (accountType) {
-            AccountType.OAUTH2 -> {
-                // 显示OAuth2相关提示
+            com.zy.email.data.model.AccountType.OAUTH2 -> {
                 binding.tvTypeHint.text = "检测到Microsoft/Google邮箱，将使用安全登录方式"
                 binding.tvTypeHint.visibility = View.VISIBLE
             }
-            AccountType.SMTP -> {
-                // 显示SMTP配置选项
+            com.zy.email.data.model.AccountType.SMTP -> {
                 binding.tvTypeHint.text = "请输入QQ/163等邮箱的密码或授权码"
                 binding.tvTypeHint.visibility = View.VISIBLE
             }
         }
     }
     
-    /**
-     * 执行登录
-     */
     private fun performLogin(email: String, password: String, displayName: String) {
         binding.progressBar.visibility = View.VISIBLE
         binding.btnLogin.isEnabled = false
@@ -129,16 +111,11 @@ class LoginActivity : AppCompatActivity() {
             
             when (result) {
                 is LoginResult.Success -> {
-                    // 保存账户
                     val savedAccount = EmailRepository.saveAccount(account)
-                    
                     withContext(Dispatchers.Main) {
                         binding.progressBar.visibility = View.GONE
                         binding.btnLogin.isEnabled = true
-                        
                         Toast.makeText(this@LoginActivity, "登录成功！", Toast.LENGTH_SHORT).show()
-                        
-                        // 启动主界面
                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                         finish()
                     }
@@ -151,14 +128,10 @@ class LoginActivity : AppCompatActivity() {
                     }
                 }
                 is LoginResult.NeedsAuthorization -> {
-                    // 需要OAuth2授权，启动浏览器进行登录
                     withContext(Dispatchers.Main) {
                         binding.progressBar.visibility = View.GONE
                         binding.btnLogin.isEnabled = true
-                        
-                        // 启动OAuth2授权流程
                         viewModel.startOAuth2Auth(email, password, displayName)
-                        
                         Toast.makeText(this@LoginActivity, "正在跳转到浏览器进行安全登录...", Toast.LENGTH_LONG).show()
                     }
                 }
@@ -166,9 +139,6 @@ class LoginActivity : AppCompatActivity() {
         }
     }
     
-    /**
-     * 观察登录状态
-     */
     private fun observeLoginState() {
         lifecycleScope.launch {
             viewModel.loginState.collectLatest { state ->
@@ -177,7 +147,6 @@ class LoginActivity : AppCompatActivity() {
                         binding.progressBar.visibility = View.GONE
                         binding.btnLogin.isEnabled = true
                         Toast.makeText(this@LoginActivity, "OAuth2授权成功！", Toast.LENGTH_SHORT).show()
-                        
                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                         finish()
                     }
@@ -191,9 +160,7 @@ class LoginActivity : AppCompatActivity() {
                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                         finish()
                     }
-                    is LoginViewModel.LoginState.AutoLoginNoAccounts -> {
-                        // 没有已保存的账户，显示登录界面
-                    }
+                    else -> {}
                 }
             }
         }
