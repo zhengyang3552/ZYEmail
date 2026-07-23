@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- 主题颜色 -->
+    <color name="primary">#FF1976D2</color>
+    <color name="primary_dark">#FF1565C0</color>
+    <color name="primary_light">#FFBBDEFB</color>
+    <color name="accent">#FF03DAC5</color>
+    
+    <!-- 文本颜色 -->
+    <color name="primary_text">#FF212121</color>
+    <color name="secondary_text">#FF757575</color>
+    <color name="icons">#FFFFFFFF</color>
+    <color name="divider">#FFBDBDBD</color>
+    
+    <!-- 邮件列表颜色 -->
+    <color name="unread_from">#FF212121</color>
+    <color name="unread_subject">#FF000000</color>
+    <color name="read_from">#FF616161</color>
+    <color name="read_subject">#FF424242</color>
+    
+    <!-- 背景颜色 -->
+    <color name="light_gray">#FFF5F5F5</color>
+    <color name="white_bg">#FFFFFFFF</color>
+    <color name="hint_text">#FF9E9E9E</color>
+</resources>

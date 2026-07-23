@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <PreferenceCategory android:title="账户管理">
+        <Preference
+            android:key="account_list"
+            android:title="账户列表"
+            android:summary="管理您的邮箱账户" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="应用设置">
+        <Preference
+            android:key="about"
+            android:title="关于"
+            android:summary="ZYEmail v1.0.0" />
+    </PreferenceCategory>
+    
+</PreferenceScreen>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ZYEmail</string>
+    <string name="login_title">邮箱登录</string>
+    <string name="login_email_hint">邮箱地址</string>
+    <string name="login_password_hint">密码/授权码</string>
+    <string name="login_btn">登录</string>
+    <string name="compose_title">新建邮件</string>
+    <string name="to_hint">收件人</string>
+    <string name="cc_hint">抄送</string>
+    <string name="bcc_hint">密送</string>
+    <string name="subject_hint">主题</string>
+    <string name="body_hint">邮件正文</string>
+    <string name="send_btn">发送</string>
+    <string name="cancel_btn">取消</string>
+    <string name="reply_btn">回复</string>
+    <string name="reply_all_btn">全部回复</string>
+    <string name="forward_btn">转发</string>
+    <string name="delete_btn">删除</string>
+    <string name="archive_btn">归档</string>
+    <string name="no_account">暂无账户</string>
+    <string name="no_message">暂无邮件</string>
+    <string name="add_account">添加账户</string>
+    <string name="account_settings">账户设置</string>
+    <string name="smtp_config">SMTP配置</string>
+    <string name="imap_config">IMAP配置</string>
+</resources>

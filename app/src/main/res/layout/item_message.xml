@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <!-- 第一行：发件人和日期 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- 未读标记 -->
+        <View
+            android:id="@+id/ivUnread"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@drawable/badge_unread"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvFrom"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="@color/secondary_text" />
+
+        <!-- 附件标记 -->
+        <ImageView
+            android:id="@+id/ivAttachment"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_attachment"
+            android:layout_marginStart="4dp"
+            android:visibility="gone"
+            android:contentDescription="附件" />
+
+    </LinearLayout>
+
+    <!-- 第二行：主题 -->
+    <TextView
+        android:id="@+id/tvSubject"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textSize="14sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- 第三行：预览 -->
+    <TextView
+        android:id="@+id/tvPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textSize="12sp"
+        android:textColor="@color/secondary_text"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+</LinearLayout>

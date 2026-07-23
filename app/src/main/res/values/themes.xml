@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主主题 -->
+    <style name="Theme.ZYEmail" parent="Theme.MaterialComponents.Light.DarkActionBar">
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <!-- Material Design -->
+        <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>
+        <item name="textInputStyle">@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox</item>
+    </style>
+    
+    <!-- 无ActionBar主题（用于全屏） -->
+    <style name="Theme.ZYEmail.NoActionBar" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+    </style>
+</resources>
