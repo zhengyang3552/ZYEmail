@@ -27,7 +27,8 @@ android {
         release {
             def ksPath = System.getenv('KEYSTORE_PATH')
             if (ksPath != null) {
-                storeFile file(ksPath)
+                // rootProject 解析：相对仓库根目录，避免模块目录相对路径歧义
+                storeFile rootProject.file(ksPath)
                 storePassword System.getenv('KEYSTORE_PASSWORD') ?: ''
                 keyAlias System.getenv('KEY_ALIAS') ?: ''
                 keyPassword System.getenv('KEY_PASSWORD') ?: ''
@@ -39,8 +40,15 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // 仅在提供签名文件时启用固定签名，保证所有版本的签名证书一致，
-            // 用户可以稳定地覆盖安装与升级（配置方法见 docs/SIGNING.md）。
+            // 固定签名：release 与 debug 都使用同一把证书，保证任意版本
+            // （包括 CI 的 debug 包）之间都能稳定覆盖安装与升级。
+            if (System.getenv('KEYSTORE_PATH') != null) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            // CI 提供签名环境（KEYSTORE_PATH）时，debug 包同样使用固定签名；
+            // 本地未设置时保持默认调试签名，不影响日常开发
             if (System.getenv('KEYSTORE_PATH') != null) {
                 signingConfig signingConfigs.release
             }
