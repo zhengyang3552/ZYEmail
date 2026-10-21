@@ -15,20 +15,24 @@
         android:theme="@style/Theme.ZYEmail"
         tools:targetApi="31">
 
-        <!-- 启动页：负责判断"是否已有账户"，再决定进入主界面还是展示登录表单 -->
+        <!-- 启动页：应用入口。冷启动先经 Splash 主题显示品牌背景，
+             再路由：无账户 → LoginActivity；有账户 → 直接进入内容。
+             之前的入口是 LoginActivity，导致每次启动都先闪登录页。 -->
         <activity
-            android:name=".ui.activity.LoginActivity"
+            android:name=".ui.activity.MainActivity"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize">
+            android:theme="@style/Theme.ZYEmail.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <!-- 登录页：仅由 MainActivity 路由（无账户）或"添加账户"进入 -->
         <activity
-            android:name=".ui.activity.MainActivity"
-            android:exported="false" />
+            android:name=".ui.activity.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".ui.activity.ComposeActivity"

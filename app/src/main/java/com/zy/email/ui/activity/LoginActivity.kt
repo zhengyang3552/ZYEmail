@@ -58,7 +58,9 @@ class LoginActivity : AppCompatActivity() {
 
         setupViews()
         observeState()
-        viewModel.checkSession(skipWhenAccountsExist = !addMode)
+        // 入口已由 MainActivity 路由（无账户才会进入本页），直接展示表单；
+        // 不再做启动会话检查，避免表单延迟渲染
+        viewModel.checkSession(skipWhenAccountsExist = false)
     }
 
     private fun setupViews() {
@@ -80,13 +82,9 @@ class LoginActivity : AppCompatActivity() {
             // 等待授权期间按钮充当"取消授权"，避免用户只能干等超时
             if (viewModel.state.value is LoginUiState.AwaitingAuthorization) {
                 viewModel.cancelAuthorization()
-            } else if (addMode) {
-                // 从"添加账户"进入：取消即返回设置页
-                finish()
             } else {
-                // 首次启动：本页是启动器根 Activity，直接 finish 会退出应用；
-                // "稍后再说"应进入主界面（未登录状态下可浏览，发信/收信时再提示）
-                startActivity(Intent(this, MainActivity::class.java))
+                // addMode：返回设置页；无账户进入：返回底下的 MainActivity
+                // （其空账户引导页提供"添加账户"入口，行为一致）
                 finish()
             }
         }
@@ -167,9 +165,8 @@ class LoginActivity : AppCompatActivity() {
         // 页面即将关闭，Toast/Snackbar 都来不及展示，改为直接把结果回传给调用方
         setResult(RESULT_OK)
 
-        if (!addMode) {
-            startActivity(Intent(this, MainActivity::class.java))
-        }
+        // addMode：返回设置页；无账户进入：返回底下的 MainActivity
+        // （Room 账户 Flow 发射后自动渲染账户列表，无需手动跳转）
         finish()
     }
 

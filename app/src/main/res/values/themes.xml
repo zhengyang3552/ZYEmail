@@ -82,4 +82,13 @@
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.ZYEmail.Dialog</item>
     </style>
 
+    <!--
+        启动主题：入口页（MainActivity）在完成"是否有账户"路由查询前
+        显示品牌启动背景，避免冷启动闪现登录页或空列表。
+        颜色沿用语义令牌，深色模式自动生效。
+    -->
+    <style name="Theme.ZYEmail.Splash" parent="Theme.ZYEmail">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
+
 </resources>

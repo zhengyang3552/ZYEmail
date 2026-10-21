@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    启动背景：surface 底色 + 居中主色图标。
+    颜色引用语义令牌，深色模式下自动切换（@color/m3_surface 有 night 变体）。
+    由 Theme.ZYEmail.Splash 的 windowBackground 引用，
+    用于遮住启动入口做"是否有账户"路由查询的瞬间。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/m3_surface" />
+    <item
+        android:width="96dp"
+        android:height="96dp"
+        android:drawable="@drawable/splash_logo"
+        android:gravity="center" />
+</layer-list>

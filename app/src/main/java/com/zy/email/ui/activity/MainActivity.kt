@@ -17,6 +17,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.zy.email.R
 import com.zy.email.data.model.Account
 import com.zy.email.data.repository.EmailMessage
+import com.zy.email.data.repository.EmailRepository
 import com.zy.email.data.repository.MailFolder
 import com.zy.email.ui.theme.ThemeManager
 import com.zy.email.databinding.ActivityMainBinding
@@ -81,6 +82,21 @@ class MainActivity : AppCompatActivity() {
 
         setupViews()
         observeViewModel()
+        routeToLoginIfNoAccount()
+    }
+
+    /**
+     * 启动路由：本页是应用入口，查询本地是否已有账户——
+     * 无账户时进入登录页（本页保留在返回栈底部，登录/取消后返回这里）；
+     * 有账户则什么都不做，账户 Flow 到达后直接渲染内容（配合磁盘缓存秒开）。
+     */
+    private fun routeToLoginIfNoAccount() {
+        lifecycleScope.launch {
+            val hasAccount = runCatching { EmailRepository.getFirstAccount() }.getOrNull() != null
+            if (!hasAccount) {
+                startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+            }
+        }
     }
 
     private fun setupViews() {
