@@ -35,6 +35,15 @@ import java.net.URLEncoder
 import java.security.MessageDigest
 import java.security.SecureRandom
 
+/** 授权回调结果：浏览器重定向到回环地址后解析出的两种 outcome */
+sealed interface OAuth2RedirectResult {
+    data class Authorized(val code: String, val state: String?) : OAuth2RedirectResult
+    data class Denied(val error: String, val errorDescription: String?) : OAuth2RedirectResult
+}
+
+/** 用户在超时时间内没有完成授权 */
+class OAuth2AuthorizationTimeoutException : IOException("授权超时，请重试")
+
 /**
  * OAuth2 交互式授权管理。
  *
@@ -87,9 +96,6 @@ object OAuth2Manager {
         /** 过期时间（epoch 毫秒） */
         val expiresAt: Long
     )
-
-    /** 用户在超时时间内没有完成授权 */
-    class AuthorizationTimeoutException : IOException("授权超时，请重试")
 
     // ------------------------------------------------------------------
     // 进行中的授权流程
@@ -147,7 +153,7 @@ object OAuth2Manager {
     /**
      * 等待浏览器回调结果。
      *
-     * @throws AuthorizationTimeoutException 超时未完成授权
+     * @throws OAuth2AuthorizationTimeoutException 超时未完成授权
      * @throws IllegalStateException state 校验失败
      */
     suspend fun awaitAuthorizationResult(timeoutMs: Long = AUTH_TIMEOUT_MS): OAuth2RedirectResult {
@@ -156,7 +162,7 @@ object OAuth2Manager {
         val result = withTimeoutOrNull(timeoutMs) { callbackServer.results.receive() }
         if (result == null) {
             cancelAuthorization()
-            throw AuthorizationTimeoutException()
+            throw OAuth2AuthorizationTimeoutException()
         }
 
         if (result is OAuth2RedirectResult.Authorized) {
