@@ -85,6 +85,18 @@ object EmailRepository {
     }
 
     /**
+     * 把邮件标记为已读（IMAP \Seen 标志）。失败不抛异常（内部已记录日志），
+     * 由 ViewModel 乐观更新界面后再异步同步服务器。
+     */
+    suspend fun markMessageRead(
+        account: Account,
+        folder: MailFolder = MailFolder.INBOX,
+        uid: Long
+    ) = withContext(Dispatchers.IO) {
+        ImapMailboxManager.markMessageRead(account, folder, uid)
+    }
+
+    /**
      * 修改账户显示名称（登录后随时可改）。
      *
      * 只更新 displayName 字段，密码 / 令牌等其余字段原样保留；

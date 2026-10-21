@@ -10,6 +10,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.zy.email.R
 import com.zy.email.data.model.Account
 import com.zy.email.data.model.AccountType
+import com.zy.email.data.repository.DiskMailCache
 import com.zy.email.data.repository.EmailRepository
 import com.zy.email.databinding.ActivityAccountSettingsBinding
 import com.zy.email.databinding.DialogRenameAccountBinding
@@ -189,6 +190,8 @@ class AccountSettingsActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 EmailRepository.deleteAccount(account)
+                // 同步清理该账户的邮件列表磁盘缓存，避免残留旧数据
+                DiskMailCache.deleteAll(applicationContext, account.id)
                 binding.root.showSuccess(getString(R.string.settings_account_deleted))
             } catch (e: Exception) {
                 showMessage(

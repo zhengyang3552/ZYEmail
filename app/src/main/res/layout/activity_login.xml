@@ -75,8 +75,9 @@
             android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
             android:textColor="@color/m3_on_surface_variant" />
 
-        <!-- 表单卡片 -->
+        <!-- 表单卡片（启动会话检查期间隐藏，避免冷启动闪现登录表单） -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/formCard"
             style="@style/Widget.ZYEmail.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

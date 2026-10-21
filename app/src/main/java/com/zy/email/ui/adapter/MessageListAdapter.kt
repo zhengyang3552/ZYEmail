@@ -119,11 +119,12 @@ class MessageListAdapter(
     class MessageDiffCallback : DiffUtil.ItemCallback<EmailMessage>() {
 
         override fun areItemsTheSame(oldItem: EmailMessage, newItem: EmailMessage): Boolean {
-            val oldId = oldItem.messageId
-            val newId = newItem.messageId
-            // messageId 可能缺失（部分服务器不返回），此时退化为内容指纹
-            return if (oldId != null && newId != null) {
-                oldId == newId
+            // 优先用文件夹 UID（稳定唯一）；UID 缺失（部分服务器不返回）时
+            // 退化为内容指纹
+            return if (oldItem.uid > 0 && newItem.uid > 0) {
+                oldItem.uid == newItem.uid
+            } else if (oldItem.messageId != null && newItem.messageId != null) {
+                oldItem.messageId == newItem.messageId
             } else {
                 oldItem.from == newItem.from &&
                         oldItem.subject == newItem.subject &&

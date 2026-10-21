@@ -67,8 +67,10 @@ object ImapMailboxManager {
      * 收件箱固定为 INBOX；已发送文件夹各服务商命名不一（QQ 为 Sent Messages、
      * Gmail 为 [Gmail]/Sent Mail、163 为已发送 等），先按常见名称精确匹配，
      * 再遍历个人命名空间按关键词模糊匹配。
+     *
+     * @param readOnly 列表浏览用只读；需要写标志位（标记已读）时传 false
      */
-    private fun openFolder(store: IMAPStore, folder: MailFolder): IMAPFolder {
+    private fun openFolder(store: IMAPStore, folder: MailFolder, readOnly: Boolean = true): IMAPFolder {
         val target = when (folder) {
             MailFolder.INBOX -> store.getFolder("INBOX")
             MailFolder.SENT -> resolveSentFolder(store)
@@ -76,7 +78,7 @@ object ImapMailboxManager {
         if (target == null || !target.exists()) {
             throw IllegalStateException("未找到已发送邮件文件夹，请确认邮箱已开启 IMAP 访问")
         }
-        target.open(Folder.READ_ONLY)
+        target.open(if (readOnly) Folder.READ_ONLY else Folder.READ_WRITE)
         return target as IMAPFolder
     }
 
@@ -134,7 +136,7 @@ object ImapMailboxManager {
         for (index in rawMessages.indices.reversed()) {
             val message = rawMessages[index]
             try {
-                result.add(parseMessage(message))
+                result.add(parseMessage(message, (folder as? IMAPFolder)?.getUID(message) ?: -1L))
             } catch (e: Exception) {
                 Log.w(TAG, "跳过无法解析的邮件: ${e.message}")
             }
@@ -146,7 +148,7 @@ object ImapMailboxManager {
         return result
     }
 
-    private fun parseMessage(message: Message): EmailMessage {
+    private fun parseMessage(message: Message, uid: Long): EmailMessage {
         val html = extractBody(message, wantHtml = true).take(MAX_HTML_LENGTH)
         var plain = extractBody(message, wantHtml = false).take(MAX_TEXT_LENGTH)
         if (plain.isBlank() && html.isNotBlank()) {
@@ -154,6 +156,7 @@ object ImapMailboxManager {
         }
 
         return EmailMessage(
+            uid = uid,
             subject = runCatching { message.subject }.getOrNull().orEmpty().trim(),
             from = formatAddresses(runCatching { message.from }.getOrNull()),
             to = formatAddresses(
@@ -169,6 +172,31 @@ object ImapMailboxManager {
             hasAttachments = hasAttachment(message),
             messageId = runCatching { (message as? MimeMessage)?.messageID }.getOrNull()
         )
+    }
+
+    /**
+     * 把指定邮件标记为已读（IMAP \\Seen 标志）。
+     *
+     * 用户打开详情页时调用；uid 为加载列表时记录的文件夹 UID，
+     * 用 UID 寻址避免会话间序号漂移。服务器可能返回该邮件已不存在
+     * （被删除等），此时静默忽略。
+     */
+    suspend fun markMessageRead(account: Account, folder: MailFolder, uid: Long) {
+        if (uid <= 0L) return
+        var store: IMAPStore? = null
+        var opened: IMAPFolder? = null
+        try {
+            store = ImapConnectionManager.connect(account)
+            opened = openFolder(store, folder, readOnly = false)
+            val target = opened.getMessagesByUID(uid, uid).firstOrNull() ?: return
+            target.setFlag(Flags.Flag.SEEN, true)
+        } catch (e: Exception) {
+            // 标记失败不打断浏览流程，下次刷新会以服务器状态为准
+            Log.w(TAG, "标记已读失败: ${e.message}")
+        } finally {
+            closeFolder(opened)
+            closeStore(store)
+        }
     }
 
     /** 递归提取指定类型的正文；找不到时返回空串 */
@@ -258,8 +286,11 @@ object ImapMailboxManager {
  *
  * 新增 [cc]，用于"全部回复"时正确回填抄送人；原实现只能拿到收件人，
  * "全部回复"实际上等价于"回复"。
+ * 新增 [uid]：邮件在所属文件夹内的 UID，用于打开后标记已读等定位操作
+ * （UID 在会话间稳定，优于会序号）。
  */
 data class EmailMessage(
+    val uid: Long = -1L,
     val subject: String,
     val from: String,
     val to: String,

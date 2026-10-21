@@ -142,6 +142,13 @@ class MainActivity : AppCompatActivity() {
     private fun observeViewModel() {
         lifecycleScope.launch {
             viewModel.accounts.collect { list ->
+                // null = 首次查询尚未返回（仅冷启动短暂出现）：只显示加载占位，
+                // 不渲染列表也不渲染空账户引导页，消除"空状态闪现后跳实际内容"的闪烁
+                if (list == null) {
+                    if (!showingMessages) renderAccountsLoading()
+                    return@collect
+                }
+
                 accounts = list
                 accountAdapter.submitList(list)
 
@@ -159,6 +166,21 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.mailState.collect { state -> renderMailState(state) }
         }
+    }
+
+    /** 账户首次查询前的占位：不展示任何引导/空态，仅显示标题与进度条 */
+    private fun renderAccountsLoading() {
+        binding.toolbar.setTitle(R.string.main_accounts_title)
+        binding.toolbar.subtitle = getString(R.string.main_loading)
+        binding.toolbar.setNavigationIcon(null)
+        binding.toolbar.menu.findItem(R.id.action_refresh)?.isVisible = false
+        binding.tabFolders.setVisible(false)
+
+        binding.rvAccounts.setVisible(true)
+        binding.rvMessages.setVisible(false)
+        binding.fabCompose.setVisible(false)
+        binding.emptyState.setVisible(false)
+        binding.progressBar.setVisible(true)
     }
 
     // ==================== 渲染 ====================
@@ -193,7 +215,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun renderMailState(state: MailUiState) {
         when (state) {
-            MailUiState.Idle -> renderAccounts(accounts)
+            // Idle 且回到账户列表：仅当账户查询已有结果时才渲染，
+            // 否则保持加载占位（避免启动时空账户引导页闪现）
+            MailUiState.Idle -> if (viewModel.accounts.value != null) renderAccounts(accounts)
 
             MailUiState.Loading -> {
                 showMessagesLayout()
@@ -345,6 +369,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openMessageDetail(message: EmailMessage) {
+        // 打开即视为已读：乐观更新未读点 + 异步发送 IMAP \Seen 标记
+        if (!message.isRead) {
+            viewModel.markRead(message.uid)
+        }
+
         val isSent = viewModel.currentFolder == MailFolder.SENT
         val intent = Intent(this, MessageDetailActivity::class.java).apply {
             putExtra(MessageDetailActivity.EXTRA_ACCOUNT_ID, viewModel.currentAccountId)

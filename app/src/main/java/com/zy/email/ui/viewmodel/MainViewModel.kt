@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.zy.email.data.model.Account
+import com.zy.email.data.repository.DiskMailCache
 import com.zy.email.data.repository.EmailMessage
 import com.zy.email.data.repository.EmailRepository
 import com.zy.email.data.repository.MailFolder
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -47,12 +49,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = EmailRepository
 
     /**
-     * 账户列表来自 Room 的 Flow，插入/删除后自动刷新界面。
+     * 账户列表来自 Room 的 Flow。
+     *
+     * 初始值用 null 区分"尚未查询到结果"与"确实没有账户"——
+     * 若初始值直接给 emptyList()，主界面会先闪现"空账户引导页"，
+     * 等 Room 首次发射后才跳到实际内容（启动闪烁的根因）。
      * catch 兜底：数据库异常时退化为空列表，而不是让协程直接崩溃。
      */
-    val accounts: StateFlow<List<Account>> = repository.getAllAccounts()
-        .catch { emit(emptyList()) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val accounts: StateFlow<List<Account>?> = repository.getAllAccounts()
+        .catch { emit(emptyList<Account>()) }
+        .map<List<Account>, List<Account>?> { it }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _mailState = MutableStateFlow<MailUiState>(MailUiState.Idle)
     val mailState: StateFlow<MailUiState> = _mailState.asStateFlow()
@@ -68,6 +75,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var currentAccount: Account? = null
     private var loadJob: Job? = null
 
+    /** 会话内邮件列表内存缓存（二级为磁盘缓存 DiskMailCache） */
+    private val memoryCache = HashMap<String, List<EmailMessage>>()
+
+    private fun cacheKey(): String = "$currentAccountId-${currentFolder.name}"
+
     fun openAccount(account: Account, folder: MailFolder = MailFolder.INBOX) {
         currentAccountId = account.id
         currentAccount = account
@@ -82,10 +94,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadMessages()
     }
 
-    /** 下拉刷新 / 重试 */
+    /** 下拉刷新 / 菜单刷新：跳过缓存展示，直接重新拉取 */
     fun refresh() {
         if (currentAccount != null) {
-            loadMessages()
+            loadMessages(force = true)
+        }
+    }
+
+    /**
+     * 用户打开邮件详情时调用：先乐观更新本地状态（未读点立即消失），
+     * 再异步向服务器发送 IMAP 标记；标记失败不影响本次浏览。
+     */
+    fun markRead(uid: Long) {
+        val account = currentAccount ?: return
+        if (uid <= 0L) return
+
+        val current = _mailState.value
+        if (current is MailUiState.Content) {
+            _mailState.value = current.copy(
+                messages = current.messages.map {
+                    if (it.uid == uid) it.copy(isRead = true) else it
+                }
+            )
+        }
+
+        // 同步两级缓存，避免下次进入（尤其冷启动读磁盘缓存）未读状态回退
+        val key = cacheKey()
+        val accountId = currentAccountId
+        val folder = currentFolder
+        memoryCache[key]?.let { list ->
+            val updated = list.map {
+                if (it.uid == uid) it.copy(isRead = true) else it
+            }
+            memoryCache[key] = updated
+            viewModelScope.launch {
+                DiskMailCache.save(getApplication(), accountId, folder, updated)
+            }
+        }
+
+        viewModelScope.launch {
+            repository.markMessageRead(account, folder, uid)
         }
     }
 
@@ -98,23 +146,61 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _mailState.value = MailUiState.Idle
     }
 
-    private fun loadMessages() {
+    /**
+     * 加载当前账户当前文件夹的邮件列表。
+     *
+     * Stale-While-Revalidate 策略：
+     *  · 有缓存（内存 → 磁盘）且非强制刷新时，立即展示缓存内容，随后在
+     *    后台静默拉取最新数据，完成后仅在用户仍停留在该账户+文件夹时更新；
+     *  · 无缓存或用户主动刷新（force）时，走完整加载态。
+     * 已展示缓存时刷新失败静默保留旧内容，仅无缓存时才展示错误态。
+     */
+    private fun loadMessages(force: Boolean = false) {
         val account = currentAccount ?: return
+        val accountId = currentAccountId
+        val folder = currentFolder
+        val key = cacheKey()
+
         // 取消上一次请求：快速切换账户/文件夹时避免旧结果覆盖新结果
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _mailState.value = MailUiState.Loading
-            try {
-                val messages = repository.fetchMessages(account, folder = currentFolder)
-                _mailState.value = if (messages.isEmpty()) {
+            val cached = memoryCache[key]
+                ?: DiskMailCache.load(getApplication(), accountId, folder)?.also {
+                    memoryCache[key] = it
+                }
+
+            if (!force && !cached.isNullOrEmpty()) {
+                _mailState.value = if (cached.isEmpty()) {
                     MailUiState.Empty
                 } else {
-                    MailUiState.Content(messages)
+                    MailUiState.Content(cached)
+                }
+            } else {
+                _mailState.value = MailUiState.Loading
+            }
+
+            try {
+                val messages = repository.fetchMessages(account, folder = folder)
+                memoryCache[key] = messages
+                DiskMailCache.save(getApplication(), accountId, folder, messages)
+
+                // 用户可能已切走，仅停留在原账户+文件夹时才更新界面
+                if (currentAccountId == accountId && currentFolder == folder) {
+                    _mailState.value = if (messages.isEmpty()) {
+                        MailUiState.Empty
+                    } else {
+                        MailUiState.Content(messages)
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _mailState.value = MailUiState.Error(ErrorMessages.from(getApplication(), e))
+                // 已展示缓存内容时静默失败；无缓存才提示错误
+                if (cached.isNullOrEmpty() &&
+                    currentAccountId == accountId && currentFolder == folder
+                ) {
+                    _mailState.value = MailUiState.Error(ErrorMessages.from(getApplication(), e))
+                }
             }
         }
     }

@@ -102,6 +102,11 @@ class LoginActivity : AppCompatActivity() {
         val busy = state is LoginUiState.Submitting
         val awaiting = state is LoginUiState.AwaitingAuthorization
 
+        // 启动会话检查（Idle）期间隐藏表单：本地已有账户时会立即跳主界面，
+        // 提前渲染表单会造成"登录页闪现后进入主页"的视觉跳动
+        binding.formCard.setVisible(state !is LoginUiState.Idle)
+        binding.btnCancel.setVisible(state !is LoginUiState.Idle)
+
         binding.progressBar.setVisible(busy || awaiting)
         binding.btnLogin.isEnabled = !busy && !awaiting
         binding.btnLogin.text = getString(
