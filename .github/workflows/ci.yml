@@ -203,9 +203,45 @@ jobs:
               "build-tools;${ANDROID_BUILD_TOOLS}" > /dev/null
           fi
 
-      # 未配置签名时产出 unsigned 包，仅验证 release 配置可编译
+      # 从仓库 Secret 还原固定发布 keystore（缺失则直接失败，绝不出随机签名的包，
+      # 否则用户已安装的版本将无法覆盖升级；配置方法见 docs/SIGNING.md）
+      - name: 还原固定签名 keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::未配置 KEYSTORE_BASE64 等 Secret，无法产出签名固定的 Release 包（配置方法见 docs/SIGNING.md）"
+            exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > app/release.keystore
+          {
+            echo "KEYSTORE_PATH=app/release.keystore"
+            echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "KEY_ALIAS=$KEY_ALIAS"
+            echo "KEY_PASSWORD=$KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+
       - name: 构建 Release APK
         run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      # 输出签名证书 SHA-256 到 Step Summary：这是固定校验值，
+      # 每次发版应完全一致，用户可据此核对更新包来源
+      - name: 校验签名指纹
+        run: |
+          set -euo pipefail
+          APK=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -1)
+          "$APKSIGNER" verify --print-certs "$APK" > certs.txt
+          SHA256=$(grep -oE 'SHA-256 digest: .*' certs.txt | head -1 | cut -d' ' -f3-)
+          {
+            echo "### 签名指纹（固定校验值）"
+            echo '```'
+            echo "SHA-256: $SHA256"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 重命名 APK（带版本号）
         run: |
