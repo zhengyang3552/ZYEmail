@@ -58,6 +58,8 @@ class MessageDetailActivity : AppCompatActivity() {
     private var recipientExpanded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 动态取色需在视图创建前应用（Android 12+ 且用户开启时生效）
+        ThemeManager.applyDynamicColorIfEnabled(this)
         super.onCreate(savedInstanceState)
         binding = ActivityMessageDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)

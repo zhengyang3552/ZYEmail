@@ -104,6 +104,10 @@
     <string name="settings_theme_system">跟随系统</string>
     <string name="settings_theme_light">浅色</string>
     <string name="settings_theme_dark">深色</string>
+
+    <!-- 动态取色（Android 12+ 壁纸取色） -->
+    <string name="settings_dynamic_color">动态取色</string>
+    <string name="settings_dynamic_color_summary">跟随系统壁纸自动生成配色（Android 12 及以上可用，关闭后使用统一品牌色）</string>
     <string name="settings_add_account">添加账户</string>
     <string name="settings_account_type_smtp">SMTP / IMAP · %1$s</string>
     <string name="settings_account_type_oauth2">OAuth2 授权</string>

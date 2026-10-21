@@ -221,6 +221,32 @@
 
                 </RadioGroup>
 
+                <!-- 动态取色：Android 12+ 跟随壁纸取色，低版本自动回退品牌色 -->
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_2"
+                    android:layout_marginBottom="@dimen/space_1" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swDynamicColor"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/touch_target_min"
+                    android:paddingStart="@dimen/space_4"
+                    android:paddingEnd="@dimen/space_3"
+                    android:text="@string/settings_dynamic_color"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.BodyLarge"
+                    android:textColor="@color/m3_on_surface" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_4"
+                    android:layout_marginEnd="@dimen/space_3"
+                    android:text="@string/settings_dynamic_color_summary"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                    android:textColor="@color/m3_on_surface_variant" />
+
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ===== 关于 ===== -->

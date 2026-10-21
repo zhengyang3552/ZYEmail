@@ -36,6 +36,8 @@ class AccountSettingsActivity : AppCompatActivity() {
     private var accounts: List<Account> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 动态取色需在视图创建前应用（Android 12+ 且用户开启时生效）
+        ThemeManager.applyDynamicColorIfEnabled(this)
         super.onCreate(savedInstanceState)
         binding = ActivityAccountSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -74,6 +76,13 @@ class AccountSettingsActivity : AppCompatActivity() {
         binding.rowThemeSystem.setOnClickListener { applyThemeMode(ThemeManager.MODE_SYSTEM) }
         binding.rowThemeLight.setOnClickListener { applyThemeMode(ThemeManager.MODE_LIGHT) }
         binding.rowThemeDark.setOnClickListener { applyThemeMode(ThemeManager.MODE_DARK) }
+
+        // 动态取色开关：保存偏好后重建界面立即生效（Android 12 以下无视觉效果）
+        binding.swDynamicColor.isChecked = ThemeManager.dynamicColorEnabled(this)
+        binding.swDynamicColor.setOnCheckedChangeListener { _, checked ->
+            ThemeManager.setDynamicColorEnabled(this, checked)
+            recreate()
+        }
     }
 
     /**

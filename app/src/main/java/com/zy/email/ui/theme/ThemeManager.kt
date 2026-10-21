@@ -1,16 +1,22 @@
 package com.zy.email.ui.theme
 
+import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
+import com.google.android.material.color.DynamicColors
 import com.zy.email.R
 
 /**
- * 明暗模式控制。
+ * 明暗模式与动态配色控制。
  *
- * 只负责"用户偏好 → AppCompatDelegate"这一段映射，具体的颜色差异全部由
+ * 外观模式只负责"用户偏好 → AppCompatDelegate"这一段映射，具体的颜色差异全部由
  * `values/colors.xml` 与 `values-night/colors.xml` 中的同名令牌承担，
  * 因此切换模式时不需要在任何界面里写 if-else。
+ *
+ * 动态配色（Android 12+ 壁纸取色，参考 rikkahub 的"壁纸取色 + 种子色回退"）：
+ * 开启后由 Material 组件的 DynamicColors 在 API 31+ 用壁纸色替换品牌色，
+ * 低版本自动忽略注册、继续使用 values/ 下的统一种子色方案。
  */
 object ThemeManager {
 
@@ -25,6 +31,7 @@ object ThemeManager {
 
     private const val PREFS_NAME = "zy_email_settings"
     private const val KEY_THEME_MODE = "theme_mode"
+    private const val KEY_DYNAMIC_COLOR = "dynamic_color"
 
     private val availableModes = intArrayOf(MODE_SYSTEM, MODE_LIGHT, MODE_DARK)
 
@@ -67,6 +74,32 @@ object ThemeManager {
                         Configuration.UI_MODE_NIGHT_MASK
                 uiMode == Configuration.UI_MODE_NIGHT_YES
             }
+        }
+    }
+
+    // ---------------------------------------------------------------- 动态配色
+
+    /** 动态取色是否开启（默认关闭，保持统一品牌色） */
+    fun dynamicColorEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_DYNAMIC_COLOR, false)
+
+    /** 保存动态取色偏好（是否立即生效由调用方处理） */
+    fun setDynamicColorEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_DYNAMIC_COLOR, enabled).apply()
+    }
+
+    /**
+     * 在每个 Activity 的 onCreate 中、super.onCreate 之前调用。
+     * Android 12+ 且开关打开时用壁纸取色包装当前主题；其余情况原样返回，
+     * 界面继续使用 values/ 下的统一种子色方案。
+     * 按需包装（而不是在 Application 全局注册）保证关闭开关后 recreate()
+     * 即可立即恢复品牌配色，无需重启应用。
+     */
+    fun applyDynamicColorIfEnabled(activity: android.app.Activity) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S &&
+            dynamicColorEnabled(activity)
+        ) {
+            DynamicColors.applyToActivityIfAvailable(activity)
         }
     }
 

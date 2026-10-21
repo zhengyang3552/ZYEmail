@@ -17,6 +17,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.zy.email.R
 import com.zy.email.data.model.Account
 import com.zy.email.data.repository.EmailMessage
+import com.zy.email.ui.theme.ThemeManager
 import com.zy.email.databinding.ActivityMainBinding
 import com.zy.email.ui.adapter.AccountListAdapter
 import com.zy.email.ui.adapter.MessageListAdapter
@@ -67,6 +68,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 动态取色需在视图创建前应用（Android 12+ 且用户开启时生效）
+        ThemeManager.applyDynamicColorIfEnabled(this)
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)

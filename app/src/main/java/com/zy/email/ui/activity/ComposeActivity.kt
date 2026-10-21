@@ -11,6 +11,7 @@ import com.zy.email.R
 import com.zy.email.data.model.Account
 import com.zy.email.data.repository.EmailRepository
 import com.zy.email.data.repository.SendResult
+import com.zy.email.ui.theme.ThemeManager
 import com.zy.email.databinding.ActivityComposeBinding
 import com.zy.email.ui.setVisible
 import com.zy.email.utils.EmailUtils
@@ -50,6 +51,8 @@ class ComposeActivity : AppCompatActivity() {
     private var baseline: EditorState? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 动态取色需在视图创建前应用（Android 12+ 且用户开启时生效）
+        ThemeManager.applyDynamicColorIfEnabled(this)
         super.onCreate(savedInstanceState)
         binding = ActivityComposeBinding.inflate(layoutInflater)
         setContentView(binding.root)

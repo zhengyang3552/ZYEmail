@@ -2,68 +2,66 @@
 <!--
     Material 3 颜色令牌 · 深色方案
     ——————————————————————————————————————————————————————————————————
-    与 values/colors.xml 使用完全相同的令牌名称，系统在 uiMode 切换时
-    自动选用本文件的取值。深色并非简单反色，而是按 M3 规范重新映射色调：
-      · 主色使用高色调（tone 80 左右）以便在深色表面上保持可读性
-      · 容器色改用低色调（tone 30 左右），与主色形成明暗反转
-      · 表面由 tone 6 起，逐级抬升到 tone 24 以表达卡片层次
+    深色按 M3 规范重新映射色调：主色用高色调（tone 80），
+    容器用低色调（tone 30），表面由 tone 6 逐级抬升到 tone 22。
+    生成方式：material-color-utilities（HCT 色彩空间）+ 统一品牌种子色，
+    由统一设计规范一次性生成，请勿手工逐条修改。
+    统一种子色：primary #0B57D0 · error #B3261E · success #146C2E · warning #8B5000
 -->
-<resources xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="UnusedResources">
 
-    <!-- ========== Primary ========== -->
-    <color name="m3_primary">#FFA9C7FF</color>
-    <color name="m3_on_primary">#FF003062</color>
-    <color name="m3_primary_container">#FF0842A0</color>
-    <color name="m3_on_primary_container">#FFD3E3FD</color>
+<resources>
+    <!-- ========== Primary：品牌蓝（seed #0B57D0） ========== -->
+    <color name="m3_primary">#FFB2C5FF</color>
+    <color name="m3_on_primary">#FF002B72</color>
+    <color name="m3_primary_container">#FF0040A1</color>
+    <color name="m3_on_primary_container">#FFDAE2FF</color>
 
-    <!-- ========== Secondary ========== -->
-    <color name="m3_secondary">#FFB3C7E8</color>
-    <color name="m3_on_secondary">#FF1C3450</color>
-    <color name="m3_secondary_container">#FF35496A</color>
-    <color name="m3_on_secondary_container">#FFD6E3FF</color>
+    <!-- ========== Secondary：低饱和蓝灰，用于次级按钮/标签 ========== -->
+    <color name="m3_secondary">#FFC0C6DD</color>
+    <color name="m3_on_secondary">#FF2A3042</color>
+    <color name="m3_secondary_container">#FF404659</color>
+    <color name="m3_on_secondary_container">#FFDCE2F9</color>
 
-    <!-- ========== Tertiary ========== -->
-    <color name="m3_tertiary">#FF82D5D1</color>
-    <color name="m3_on_tertiary">#FF003735</color>
-    <color name="m3_tertiary_container">#FF004F4D</color>
-    <color name="m3_on_tertiary_container">#FF9EF2ED</color>
+    <!-- ========== Tertiary：青绿色（primary 色相 +60），用于附件/强调标记 ========== -->
+    <color name="m3_tertiary">#FFE1BBDD</color>
+    <color name="m3_on_tertiary">#FF412741</color>
+    <color name="m3_tertiary_container">#FF5A3D59</color>
+    <color name="m3_on_tertiary_container">#FFFED7F9</color>
 
-    <!-- ========== Surface ========== -->
-    <color name="m3_surface">#FF111318</color>
-    <color name="m3_on_surface">#FFE2E2E6</color>
-    <color name="m3_surface_variant">#FF43474E</color>
-    <color name="m3_on_surface_variant">#FFC3C7CF</color>
-    <color name="m3_surface_container_lowest">#FF0C0E12</color>
-    <color name="m3_surface_container_low">#FF191C20</color>
-    <color name="m3_surface_container">#FF1D2024</color>
-    <color name="m3_surface_container_high">#FF282A2F</color>
-    <color name="m3_surface_container_highest">#FF33353A</color>
-    <color name="m3_surface_inverse">#FFE2E2E6</color>
-    <color name="m3_on_surface_inverse">#FF2F3033</color>
-    <color name="m3_primary_inverse">#FF0B57D0</color>
+    <!-- ========== Surface：表面层级（由低到高，用于建立视觉层次） ========== -->
+    <color name="m3_surface">#FF131316</color>
+    <color name="m3_on_surface">#FFE4E2E6</color>
+    <color name="m3_surface_variant">#FF45464F</color>
+    <color name="m3_on_surface_variant">#FFC5C6D0</color>
+    <color name="m3_surface_container_lowest">#FF0D0E11</color>
+    <color name="m3_surface_container_low">#FF1B1B1F</color>
+    <color name="m3_surface_container">#FF1F1F23</color>
+    <color name="m3_surface_container_high">#FF292A2D</color>
+    <color name="m3_surface_container_highest">#FF343438</color>
+    <color name="m3_surface_inverse">#FFE4E2E6</color>
+    <color name="m3_on_surface_inverse">#FF303034</color>
+    <color name="m3_primary_inverse">#FF0856CF</color>
 
-    <!-- ========== Outline ========== -->
-    <color name="m3_outline">#FF8D9199</color>
-    <color name="m3_outline_variant">#FF43474E</color>
+    <!-- ========== Outline：描边与分隔线 ========== -->
+    <color name="m3_outline">#FF8F909A</color>
+    <color name="m3_outline_variant">#FF45464F</color>
 
     <!-- ========== 语义状态色 ========== -->
-    <color name="m3_error">#FFFFB4AB</color>
-    <color name="m3_on_error">#FF690005</color>
-    <color name="m3_error_container">#FF93000A</color>
-    <color name="m3_on_error_container">#FFFFDAD6</color>
+    <color name="m3_error">#FFFFB4AA</color>
+    <color name="m3_on_error">#FF690003</color>
+    <color name="m3_error_container">#FF910809</color>
+    <color name="m3_on_error_container">#FFFFDAD5</color>
 
-    <color name="m3_success">#FF6DD58C</color>
-    <color name="m3_on_success">#FF00391A</color>
-    <color name="m3_success_container">#FF00522A</color>
-    <color name="m3_on_success_container">#FF89F8A6</color>
+    <color name="m3_success">#FF85D98E</color>
+    <color name="m3_on_success">#FF003913</color>
+    <color name="m3_success_container">#FF00531E</color>
+    <color name="m3_on_success_container">#FFA1F6A8</color>
 
-    <color name="m3_warning">#FFFFB865</color>
-    <color name="m3_on_warning">#FF48290A</color>
-    <color name="m3_warning_container">#FF653D00</color>
-    <color name="m3_on_warning_container">#FFFFDCC0</color>
+    <color name="m3_warning">#FFFFB871</color>
+    <color name="m3_on_warning">#FF4A2800</color>
+    <color name="m3_warning_container">#FF6A3C00</color>
+    <color name="m3_on_warning_container">#FFFFDCBE</color>
 
-    <!-- ========== 交互叠加层 ========== -->
+    <!-- ========== 交互叠加层（state layer / ripple） ========== -->
     <color name="m3_ripple">#33FFFFFF</color>
-
 </resources>
