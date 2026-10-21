@@ -118,24 +118,31 @@ fun getImapDefaults(email: String): Pair<String, Int> {
 }
 
 /**
- * OAuth2 端点配置。保留该能力供后续接入应用注册信息时使用；
- * 当前版本未内置 clientId，登录流程不会真正发起授权请求。
+ * OAuth2 端点配置。授权地址 / 令牌地址 / scope 由服务商固定，
+ * Client ID 由用户在自己的 Azure AD / Google Cloud 应用注册中获取。
+ *
+ * redirectUriTemplate 中的 {port} 占位符在发起授权时由 OAuth2Manager
+ * 用本机回环回调服务器的实际端口替换：
+ *  · Microsoft 公共客户端允许 http://localhost 任意端口（需在 Azure 应用中
+ *    添加「移动和桌面应用程序」平台并勾选 http://localhost）；
+ *  · Google「桌面应用」类型客户端内置支持 http://127.0.0.1 回环重定向。
  */
-fun getOAuth2Defaults(email: String): OAuth2Config? {
+fun getOAuth2Defaults(email: String, clientId: String = ""): OAuth2Config? {
     val domain = domainOf(email)
     return when {
         domain.contains("outlook") || domain.contains("hotmail") ||
                 domain.contains("live") || domain.contains("microsoft") -> OAuth2Config(
             authorizeUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
             tokenUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-            scope = "https://outlook.office.com/IMAP.AccessAsUser.All https://outlook.office.com/SMTP.Send",
-            redirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient"
+            scope = "offline_access https://outlook.office.com/IMAP.AccessAsUser.All " +
+                    "https://outlook.office.com/SMTP.Send",
+            redirectUriTemplate = "http://localhost:{port}/oauth2redirect"
         )
         domain.contains("gmail") || domain.contains("google") -> OAuth2Config(
             authorizeUrl = "https://accounts.google.com/o/oauth2/v2/auth",
             tokenUrl = "https://oauth2.googleapis.com/token",
             scope = "https://mail.google.com/",
-            redirectUri = "http://localhost"
+            redirectUriTemplate = "http://127.0.0.1:{port}/oauth2redirect"
         )
         else -> null
     }
@@ -145,5 +152,10 @@ data class OAuth2Config(
     val authorizeUrl: String,
     val tokenUrl: String,
     val scope: String,
-    val redirectUri: String
+    /** 重定向地址模板，{port} 由授权发起时的回调服务器端口替换 */
+    val redirectUriTemplate: String
 )
+
+/** 把重定向模板中的 {port} 替换为回调服务器实际端口 */
+fun resolveRedirectUri(config: OAuth2Config, port: Int): String =
+    config.redirectUriTemplate.replace("{port}", port.toString())

@@ -1,9 +1,12 @@
 package com.zy.email.ui.activity
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -25,8 +28,9 @@ import kotlinx.coroutines.launch
  *  · 作为启动页：本地已有账户时直接进入主界面（[EXTRA_ADD_MODE] 为 false）
  *  · 从主界面"添加账户"进入：始终停留在表单（[EXTRA_ADD_MODE] 为 true）
  *
- * 原实现把这两种场景混为一谈——启动即调用 startAutoLogin 并提示"已自动登录"，
- * 用户想再添加一个账户就会被立刻弹回主界面。
+ * OAuth2 账户（Outlook / Gmail）在填写 Client ID 后点击登录，会跳转系统
+ * 浏览器完成交互式授权；授权回调由 App 内的回环服务器接收，返回登录页后
+ * 自动完成令牌交换与收发信验证。
  */
 class LoginActivity : AppCompatActivity() {
 
@@ -39,6 +43,9 @@ class LoginActivity : AppCompatActivity() {
 
     private var addMode = false
     private var useAppPassword = false
+
+    /** 已打开过浏览器的授权地址，避免旋转屏幕等状态重放时重复拉起浏览器 */
+    private var launchedAuthorizationUrl: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // 动态取色需在视图创建前应用（Android 12+ 且用户开启时生效）
@@ -69,7 +76,20 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.btnLogin.setOnClickListener { submit() }
-        binding.btnCancel.setOnClickListener { finish() }
+        binding.btnCancel.setOnClickListener {
+            // 等待授权期间按钮充当"取消授权"，避免用户只能干等超时
+            if (viewModel.state.value is LoginUiState.AwaitingAuthorization) {
+                viewModel.cancelAuthorization()
+            } else if (addMode) {
+                // 从"添加账户"进入：取消即返回设置页
+                finish()
+            } else {
+                // 首次启动：本页是启动器根 Activity，直接 finish 会退出应用；
+                // "稍后再说"应进入主界面（未登录状态下可浏览，发信/收信时再提示）
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
+        }
     }
 
     private fun observeState() {
@@ -80,16 +100,23 @@ class LoginActivity : AppCompatActivity() {
 
     private fun render(state: LoginUiState) {
         val busy = state is LoginUiState.Submitting
+        val awaiting = state is LoginUiState.AwaitingAuthorization
 
-        binding.progressBar.setVisible(busy)
-        binding.btnLogin.isEnabled = !busy
+        binding.progressBar.setVisible(busy || awaiting)
+        binding.btnLogin.isEnabled = !busy && !awaiting
         binding.btnLogin.text = getString(
-            if (busy) R.string.login_btn_loading else R.string.login_btn
+            when {
+                busy -> R.string.login_btn_loading
+                awaiting -> R.string.login_oauth_waiting
+                isOAuth2Form() -> R.string.login_btn_oauth2
+                else -> R.string.login_btn
+            }
         )
-        binding.editEmail.isEnabled = !busy
-        binding.editPassword.isEnabled = !busy
-        binding.editDisplayName.isEnabled = !busy
-        binding.switchAppPassword.isEnabled = !busy
+        binding.editEmail.isEnabled = !busy && !awaiting
+        binding.editPassword.isEnabled = !busy && !awaiting
+        binding.editDisplayName.isEnabled = !busy && !awaiting
+        binding.editClientId.isEnabled = !busy && !awaiting
+        binding.switchAppPassword.isEnabled = !busy && !awaiting
 
         when (state) {
             LoginUiState.Idle, LoginUiState.Ready, LoginUiState.Submitting -> Unit
@@ -101,17 +128,33 @@ class LoginActivity : AppCompatActivity() {
 
             is LoginUiState.Success -> onLoginSuccess()
 
+            is LoginUiState.AwaitingAuthorization -> {
+                showHint(state.message, isError = false)
+                openAuthorizationPage(state.authorizationUrl)
+            }
+
+            is LoginUiState.ClientIdRequired -> {
+                binding.tilClientId.error = state.message
+                binding.editClientId.requestFocus()
+                viewModel.consumeTransientState()
+            }
+
             is LoginUiState.Error -> {
                 showHint(state.message, isError = true)
                 viewModel.consumeTransientState()
             }
+        }
+    }
 
-            is LoginUiState.NeedsAppPassword -> {
-                showHint(state.message, isError = true)
-                // 提供可操作的下一步：打开"应用专用密码"开关
-                binding.switchAppPassword.setVisible(true)
-                viewModel.consumeTransientState()
-            }
+    /** 打开系统浏览器进行授权（Google 拒绝 WebView 中的 OAuth，必须用外部浏览器） */
+    private fun openAuthorizationPage(url: String) {
+        if (url == launchedAuthorizationUrl) return
+        launchedAuthorizationUrl = url
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, R.string.login_oauth_no_browser, Toast.LENGTH_LONG).show()
+            viewModel.cancelAuthorization()
         }
     }
 
@@ -125,13 +168,19 @@ class LoginActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun isOAuth2Form(): Boolean =
+        !useAppPassword && requiresOAuth2ByDefault(binding.editEmail.text?.toString().orEmpty())
+
     private fun submit() {
         val email = binding.editEmail.text?.toString()?.trim().orEmpty()
         val password = binding.editPassword.text?.toString().orEmpty()
         val displayName = binding.editDisplayName.text?.toString()?.trim().orEmpty()
+        val clientId = binding.editClientId.text?.toString()?.trim().orEmpty()
+        val oauthLogin = requiresOAuth2ByDefault(email) && !useAppPassword
 
         binding.tilEmail.error = null
         binding.tilPassword.error = null
+        binding.tilClientId.error = null
 
         if (email.isEmpty()) {
             binding.tilEmail.error = getString(R.string.login_error_email_required)
@@ -143,7 +192,13 @@ class LoginActivity : AppCompatActivity() {
             binding.editEmail.requestFocus()
             return
         }
-        if (password.isEmpty()) {
+        if (oauthLogin) {
+            if (clientId.isEmpty()) {
+                binding.tilClientId.error = getString(R.string.login_client_id_required)
+                binding.editClientId.requestFocus()
+                return
+            }
+        } else if (password.isEmpty()) {
             binding.tilPassword.error = getString(R.string.login_error_password_required)
             binding.editPassword.requestFocus()
             return
@@ -151,24 +206,27 @@ class LoginActivity : AppCompatActivity() {
 
         hideKeyboard()
         showHint(null, isError = false)
-        viewModel.submit(email, password, displayName, useAppPassword)
+        viewModel.submit(email, password, displayName, useAppPassword, clientId)
     }
 
     /**
-     * 更新账户类型提示。
+     * 更新账户类型提示与表单字段可见性。
      *
-     * 检测到 Outlook / Gmail 域名时，除了说明默认需要 OAuth2，还会显示
-     * "使用应用专用密码登录"开关——这是当前版本下让这类邮箱可用的唯一路径。
+     * 检测到 Outlook / Gmail 域名时：
+     *  · 展示 Client ID 输入框（交互式授权必需）
+     *  · 保留"使用应用专用密码登录"开关，作为走 SMTP/IMAP 的替代路径
      */
     private fun updateTypeHint(email: String) {
         if (!email.contains("@")) {
             binding.tvTypeHint.setVisible(false)
             binding.switchAppPassword.setVisible(false)
+            binding.tilClientId.setVisible(false)
             return
         }
 
         val oauthByDefault = requiresOAuth2ByDefault(email)
         binding.switchAppPassword.setVisible(oauthByDefault)
+        binding.tilClientId.setVisible(oauthByDefault && !useAppPassword)
 
         if (oauthByDefault && !useAppPassword) {
             showHint(getString(R.string.login_hint_oauth2), isError = false)

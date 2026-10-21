@@ -127,6 +127,28 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- OAuth2 交互式授权所需的应用注册 Client ID（仅 OAuth2 域名显示） -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilClientId"
+                    style="@style/Widget.ZYEmail.TextInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:hint="@string/login_client_id_hint"
+                    android:visibility="gone"
+                    app:helperText="@string/login_client_id_helper"
+                    tools:visibility="visible">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editClientId"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:imeOptions="actionNext"
+                        android:inputType="text"
+                        android:maxLines="1" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilDisplayName"
                     style="@style/Widget.ZYEmail.TextInput"
@@ -182,6 +204,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
+                    android:indeterminate="true"
                     android:visibility="gone"
                     app:indicatorColor="@color/m3_primary"
                     app:trackColor="@color/m3_surface_container_high"

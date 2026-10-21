@@ -45,7 +45,7 @@ object ImapMailboxManager {
      * 连接账户并读取收件箱最近 [limit] 封邮件。
      * 连接失败会抛出异常，由上层统一转换为用户提示。
      */
-    fun loadMessages(account: Account, limit: Int = DEFAULT_LIMIT): List<EmailMessage> {
+    suspend fun loadMessages(account: Account, limit: Int = DEFAULT_LIMIT): List<EmailMessage> {
         var store: IMAPStore? = null
         var folder: IMAPFolder? = null
         try {

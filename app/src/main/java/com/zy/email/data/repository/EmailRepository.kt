@@ -1,7 +1,6 @@
 package com.zy.email.data.repository
 
 import com.zy.email.data.model.Account
-import com.zy.email.data.model.AccountType
 import com.zy.email.utils.EncryptionUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -56,18 +55,14 @@ object EmailRepository {
     }
 
     /**
-     * 登录校验：SMTP 账户同时验证收信（IMAP）与发信（SMTP）通道，
+     * 登录校验：同时验证收信（IMAP）与发信（SMTP）通道，
      * 避免"能收不能发"的账户被当作登录成功。
+     *
+     * SMTP 账户用密码 / 授权码认证；OAUTH2 账户用 XOAUTH2 机制认证，
+     * 令牌过期时由 [OAuth2Manager] 自动刷新。
      */
     suspend fun loginAccount(account: Account): LoginResult = withContext(Dispatchers.IO) {
-        when (account.accountType) {
-            AccountType.SMTP -> loginWithSmtp(account)
-            AccountType.OAUTH2 -> loginWithOAuth2()
-        }
-    }
-
-    private fun loginWithSmtp(account: Account): LoginResult {
-        return try {
+        try {
             // 先验证收件通道
             ImapConnectionManager.connect(account).let { store ->
                 runCatching { if (store.isConnected) store.close() }
@@ -79,12 +74,6 @@ object EmailRepository {
             LoginResult.Error(e)
         }
     }
-
-    /**
-     * OAuth2 账户需要应用注册信息（clientId / 重定向 URI）才能走交互式授权，
-     * 当前版本未内置，因此统一返回"需要授权"，由界面引导用户改用应用专用密码。
-     */
-    private fun loginWithOAuth2(): LoginResult = LoginResult.NeedsAuthorization
 
     /** 拉取收件箱邮件（按时间倒序）。失败时抛出异常，由 ViewModel 转换提示。 */
     suspend fun fetchMessages(
@@ -119,9 +108,6 @@ object EmailRepository {
 /** 登录结果 */
 sealed interface LoginResult {
     data object Success : LoginResult
-
-    /** 该邮箱需要 OAuth2 授权，当前版本未配置应用注册信息 */
-    data object NeedsAuthorization : LoginResult
 
     data class Error(val throwable: Throwable? = null, val rawMessage: String? = null) : LoginResult
 }

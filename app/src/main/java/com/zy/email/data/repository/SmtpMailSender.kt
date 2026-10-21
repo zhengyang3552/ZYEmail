@@ -1,12 +1,12 @@
 package com.zy.email.data.repository
 
 import com.zy.email.data.model.Account
+import com.zy.email.data.model.AccountType
 import com.zy.email.utils.EncryptionUtils
 import java.util.Date
 import java.util.Properties
 import javax.mail.Message
 import javax.mail.Session
-import javax.mail.Transport
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 
@@ -42,6 +42,10 @@ object SmtpMailSender {
             put("mail.smtp.connectiontimeout", TIMEOUT_MS)
             put("mail.smtp.timeout", TIMEOUT_MS)
             put("mail.smtp.writetimeout", TIMEOUT_MS)
+            if (account.accountType == AccountType.OAUTH2) {
+                // XOAUTH2：connect 的密码参数即 access token
+                put("mail.smtp.auth.mechanisms", "XOAUTH2")
+            }
         }
     }
 
@@ -50,7 +54,7 @@ object SmtpMailSender {
      *
      * @param to 至少一个收件人；调用方负责先校验地址格式
      */
-    fun send(
+    suspend fun send(
         account: Account,
         to: List<InternetAddress>,
         cc: List<InternetAddress>,
@@ -65,6 +69,13 @@ object SmtpMailSender {
 
         return try {
             require(account.smtpServer.isNotBlank()) { "SMTP 服务器地址为空" }
+
+            val isOAuth2 = account.accountType == AccountType.OAUTH2
+            val credential = if (isOAuth2) {
+                OAuth2Manager.getValidAccessToken(account)
+            } else {
+                EncryptionUtils.decrypt(account.password)
+            }
 
             val session = Session.getInstance(propertiesFor(account), null)
             val from = if (account.displayName.isBlank()) {
@@ -88,7 +99,15 @@ object SmtpMailSender {
                 sentDate = Date()
             }
 
-            Transport.send(message)
+            // 显式 connect 后发送：原实现用 Transport.send(message)，无凭据
+            // 可用（未设置 mail.smtp.user/password 属性），认证必然失败
+            val transport = session.getTransport("smtp")
+            try {
+                transport.connect(account.smtpServer, account.smtpPort, account.email, credential)
+                transport.sendMessage(message, message.allRecipients)
+            } finally {
+                runCatching { transport.close() }
+            }
             SendResult.Success
         } catch (e: Exception) {
             SendResult.Error(throwable = e)

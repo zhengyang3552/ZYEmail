@@ -20,12 +20,15 @@
 **配置方式：** 邮箱地址 + 密码/授权码
 
 #### OAuth2 方式（适用于 Microsoft、Google 等）
-- ⚠️ Microsoft Outlook / Hotmail / Live
-- ⚠️ Gmail / Google 邮箱
+- ✅ Microsoft Outlook / Hotmail / Live
+- ✅ Gmail / Google 邮箱
 
-**配置方式：** OAuth2 交互式授权需要 Azure AD / Google Cloud 的应用注册信息
-（clientId、重定向 URI）。当前版本未内置该信息，登录页会提示并引导开启
-「使用应用专用密码登录」，改走 SMTP / IMAP 通道（前提是该邮箱已开启应用专用密码）。
+**配置方式：** OAuth2 交互式授权（PKCE 授权码模式）。登录页检测到
+Outlook / Gmail 域名后，填入自己注册应用的 **Client ID**，点击
+「开始 OAuth2 授权」→ 跳转系统浏览器完成登录 → App 内回环服务器自动
+接收授权码并完成令牌交换与收发信验证。令牌过期自动刷新，加密存储。
+
+应用注册步骤见下方「OAuth2 配置」。
 
 ### 核心功能
 - 📧 多账户管理（添加 / 切换 / 删除）
@@ -121,11 +124,20 @@ export JAVA_HOME=/path/to/jdk17
 ### 163邮箱
 需要在 163邮箱设置中开启 SMTP 服务，并使用**授权码**。
 
-### Microsoft邮箱
-需要配置 Azure AD 应用，获取 Client ID，并在 OAuth2Manager 中配置。
+### Microsoft邮箱（OAuth2）
+1. 前往 [Azure 门户 - 应用注册](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) 新建注册
+2. 受支持的账户类型选择「任何组织目录中的账户和个人 Microsoft 账户」（或按需选择）
+3. 「身份验证」→「添加平台」→「移动和桌面应用程序」，勾选 `https://login.microsoftonline.com/common/oauth2/nativeclient`，并手动添加重定向 URI `http://localhost`；同时勾选「允许公共客户端流」
+4. 「API 权限」添加委托权限：`offline_access`、`IMAP.AccessAsUser.All`、`SMTP.Send`
+5. 把「应用程序(客户端) ID」填入登录页的 Client ID 即可
 
-### Google/Gmail
-需要配置 Google Cloud Console 应用，获取 Client ID 和 Client Secret。
+### Google/Gmail（OAuth2）
+1. 前往 [Google Cloud Console - API 和服务](https://console.cloud.google.com/apis/credentials) 创建 OAuth 客户端 ID，应用类型选 **桌面应用**
+2. 启用 Gmail API
+3. 把客户端 ID 填入登录页的 Client ID 即可（桌面应用类型内置支持 `http://127.0.0.1` 回环重定向，无需额外配置重定向 URI）
+
+> 注意：Gmail 的 `https://mail.google.com/` 属于受限范围，自用测试无需审核；
+> 若要对外发布应用，需通过 Google 的 OAuth 验证流程。
 
 ## 许可证
 

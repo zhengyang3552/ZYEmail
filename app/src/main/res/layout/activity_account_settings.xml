@@ -100,13 +100,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <RadioGroup
-                    android:id="@+id/radioGroupTheme"
+                <!-- MaterialCardView 继承自 FrameLayout，子视图不加容器会全部
+                     层叠在同一位置（原 bug：说明文字与单选项、开关互相重叠），
+                     这里用垂直 LinearLayout 依序排列。 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingTop="@dimen/space_2"
-                    android:paddingBottom="@dimen/space_2">
+                    android:orientation="vertical">
+
+                    <RadioGroup
+                        android:id="@+id/radioGroupTheme"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingTop="@dimen/space_2"
+                        android:paddingBottom="@dimen/space_2">
 
                     <LinearLayout
                         android:id="@+id/rowThemeSystem"
@@ -243,9 +251,12 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/space_4"
                     android:layout_marginEnd="@dimen/space_3"
+                    android:paddingBottom="@dimen/space_3"
                     android:text="@string/settings_dynamic_color_summary"
                     android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
                     android:textColor="@color/m3_on_surface_variant" />
+
+                </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
