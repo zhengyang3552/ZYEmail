@@ -42,26 +42,73 @@ object ImapMailboxManager {
     private const val MAX_HTML_LENGTH = 200_000
 
     /**
-     * 连接账户并读取收件箱最近 [limit] 封邮件。
+     * 连接账户并读取指定文件夹最近 [limit] 封邮件。
      * 连接失败会抛出异常，由上层统一转换为用户提示。
      */
-    suspend fun loadMessages(account: Account, limit: Int = DEFAULT_LIMIT): List<EmailMessage> {
+    suspend fun loadMessages(
+        account: Account,
+        limit: Int = DEFAULT_LIMIT,
+        folder: MailFolder = MailFolder.INBOX
+    ): List<EmailMessage> {
         var store: IMAPStore? = null
-        var folder: IMAPFolder? = null
+        var opened: IMAPFolder? = null
         try {
             store = ImapConnectionManager.connect(account)
-            folder = openInbox(store)
-            return readMessages(folder, limit)
+            opened = openFolder(store, folder)
+            return readMessages(opened, limit)
         } finally {
-            closeFolder(folder)
+            closeFolder(opened)
             closeStore(store)
         }
     }
 
-    private fun openInbox(store: IMAPStore): IMAPFolder {
-        val folder = store.getFolder("INBOX")
-        folder.open(Folder.READ_ONLY)
-        return folder as IMAPFolder
+    /**
+     * 打开目标文件夹。
+     * 收件箱固定为 INBOX；已发送文件夹各服务商命名不一（QQ 为 Sent Messages、
+     * Gmail 为 [Gmail]/Sent Mail、163 为已发送 等），先按常见名称精确匹配，
+     * 再遍历个人命名空间按关键词模糊匹配。
+     */
+    private fun openFolder(store: IMAPStore, folder: MailFolder): IMAPFolder {
+        val target = when (folder) {
+            MailFolder.INBOX -> store.getFolder("INBOX")
+            MailFolder.SENT -> resolveSentFolder(store)
+        }
+        if (target == null || !target.exists()) {
+            throw IllegalStateException("未找到已发送邮件文件夹，请确认邮箱已开启 IMAP 访问")
+        }
+        target.open(Folder.READ_ONLY)
+        return target as IMAPFolder
+    }
+
+    /** 已发送文件夹的常见命名（覆盖 QQ / 163 / 126 / Gmail / Outlook / 新浪等） */
+    private val SENT_FOLDER_CANDIDATES = listOf(
+        "Sent Messages", "Sent", "Sent Items", "Sent Mail",
+        "已发送", "已发送邮件", "已发出的邮件",
+        "[Gmail]/Sent Mail", "[Gmail]/已发送邮件"
+    )
+
+    private fun resolveSentFolder(store: IMAPStore): Folder? {
+        for (name in SENT_FOLDER_CANDIDATES) {
+            val candidate = runCatching { store.getFolder(name) }.getOrNull()
+            if (candidate?.exists() == true) return candidate
+        }
+
+        // 兜底：遍历个人命名空间下的所有文件夹，按名称关键词匹配
+        val namespaces = runCatching { store.personalNamespaces }.getOrElse { emptyArray() }
+        for (namespace in namespaces) {
+            val children = runCatching {
+                store.getFolder(namespace.fullName).list()
+            }.getOrElse { emptyArray() }
+            for (child in children) {
+                val simpleName = child.fullName.substringAfterLast(namespace.separator.toString())
+                if (simpleName.contains("sent", ignoreCase = true) ||
+                    simpleName.contains("已发送")
+                ) {
+                    return child
+                }
+            }
+        }
+        return null
     }
 
     /**
@@ -92,6 +139,10 @@ object ImapMailboxManager {
                 Log.w(TAG, "跳过无法解析的邮件: ${e.message}")
             }
         }
+        // 显式按时间倒序：IMAP 序号只反映投递顺序，个别邮件补投或服务器
+        // 缓存会导致序号顺序与时间顺序不一致，这里以邮件时间为准统一排序
+        // （无时间的邮件排到最后）
+        result.sortByDescending { it.date ?: Date(0) }
         return result
     }
 

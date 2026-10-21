@@ -33,6 +33,7 @@ class MessageDetailActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_ACCOUNT_ID = "extra_account_id"
+        const val EXTRA_IS_SENT = "extra_is_sent"
         const val EXTRA_SUBJECT = "extra_subject"
         const val EXTRA_FROM = "extra_from"
         const val EXTRA_TO = "extra_to"
@@ -54,6 +55,9 @@ class MessageDetailActivity : AppCompatActivity() {
     private var bodyHtml = ""
     private var bodyText = ""
 
+    /** 是否来自"已发送"文件夹：此时回复目标应是收件人而非发件人 */
+    private var isSent = false
+
     /** 收件人信息是否处于展开状态（默认单行省略） */
     private var recipientExpanded = false
 
@@ -73,6 +77,7 @@ class MessageDetailActivity : AppCompatActivity() {
 
     private fun readExtras() {
         accountId = intent.getLongExtra(EXTRA_ACCOUNT_ID, 0L)
+        isSent = intent.getBooleanExtra(EXTRA_IS_SENT, false)
         subject = intent.getStringExtra(EXTRA_SUBJECT).orEmpty()
         from = intent.getStringExtra(EXTRA_FROM).orEmpty()
         to = intent.getStringExtra(EXTRA_TO).orEmpty()
@@ -84,8 +89,14 @@ class MessageDetailActivity : AppCompatActivity() {
 
     private fun setupToolbar() {
         binding.toolbar.setNavigationOnClickListener { finish() }
+        // 标记邮件来源场景：已发送 / 有附件
+        val badges = mutableListOf<String>()
+        if (isSent) badges.add(getString(R.string.detail_sent_badge))
         if (intent.getBooleanExtra(EXTRA_HAS_ATTACHMENTS, false)) {
-            binding.toolbar.subtitle = getString(R.string.message_has_attachment)
+            badges.add(getString(R.string.message_has_attachment))
+        }
+        if (badges.isNotEmpty()) {
+            binding.toolbar.subtitle = badges.joinToString(" · ")
         }
     }
 
@@ -251,17 +262,26 @@ class MessageDetailActivity : AppCompatActivity() {
 
             when (mode) {
                 ComposeMode.REPLY, ComposeMode.REPLY_ALL -> {
-                    putExtra(ComposeActivity.EXTRA_TO, EmailUtils.bareAddressOf(from))
-                    if (mode == ComposeMode.REPLY_ALL) {
-                        val senderAddress = EmailUtils.bareAddressOf(from)
-                        val ccAddresses = to.split(",")
-                            .map { it.trim() }
-                            .filter {
-                                it.isNotEmpty() &&
-                                        !EmailUtils.bareAddressOf(it).equals(senderAddress, true)
-                            }
-                            .joinToString(", ")
-                        putExtra(ComposeActivity.EXTRA_CC, ccAddresses)
+                    if (isSent) {
+                        // 已发送邮件：发件人是自己，回复目标应为原收件人
+                        putExtra(ComposeActivity.EXTRA_TO, EmailUtils.bareAddressListOf(to))
+                        if (mode == ComposeMode.REPLY_ALL) {
+                            putExtra(ComposeActivity.EXTRA_CC, EmailUtils.bareAddressListOf(cc))
+                        }
+                    } else {
+                        putExtra(ComposeActivity.EXTRA_TO, EmailUtils.bareAddressOf(from))
+                        if (mode == ComposeMode.REPLY_ALL) {
+                            val senderAddress = EmailUtils.bareAddressOf(from)
+                            val ccAddresses = to.split(",")
+                                .map { it.trim() }
+                                .filter {
+                                    it.isNotEmpty() &&
+                                            !EmailUtils.bareAddressOf(it)
+                                                .equals(senderAddress, true)
+                                }
+                                .joinToString(", ")
+                            putExtra(ComposeActivity.EXTRA_CC, ccAddresses)
+                        }
                     }
                     putExtra(
                         ComposeActivity.EXTRA_SUBJECT,

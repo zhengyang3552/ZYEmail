@@ -6,6 +6,7 @@
 
     <!-- ========== 通用 ========== -->
     <string name="action_cancel">取消</string>
+    <string name="action_save">保存</string>
     <string name="action_close">关闭</string>
     <string name="action_retry">重试</string>
     <string name="action_delete">删除</string>
@@ -54,6 +55,10 @@
     <string name="main_empty_accounts_desc">添加 QQ、163 或企业邮箱，开始收发邮件</string>
     <string name="main_empty_messages_title">收件箱是空的</string>
     <string name="main_empty_messages_desc">下拉可刷新，或稍后再来看看</string>
+    <string name="main_tab_inbox">收件箱</string>
+    <string name="main_tab_sent">已发送</string>
+    <string name="main_empty_sent_title">暂无已发送邮件</string>
+    <string name="main_empty_sent_desc">你发出的邮件会显示在这里</string>
     <string name="main_empty_action_add">添加账户</string>
     <string name="main_empty_action_refresh">刷新</string>
     <string name="main_error_title">收取邮件失败</string>
@@ -65,6 +70,8 @@
     <string name="message_unread">未读</string>
     <string name="message_has_attachment">含附件</string>
     <string name="message_unknown_sender">未知发件人</string>
+    <string name="message_unknown_recipient">未知收件人</string>
+    <string name="detail_sent_badge">已发送</string>
 
     <!-- ========== 写信页 ========== -->
     <string name="compose_title">写邮件</string>
@@ -120,6 +127,12 @@
     <string name="settings_account_type_smtp">SMTP / IMAP · %1$s</string>
     <string name="settings_account_type_oauth2">OAuth2 授权</string>
     <string name="settings_delete_account">删除账户</string>
+    <string name="settings_rename_account">修改名称</string>
+    <string name="settings_rename_title">修改账户名称</string>
+    <string name="settings_rename_hint">显示名称（写信时的发件人名称）</string>
+    <string name="settings_name_required">名称不能为空</string>
+    <string name="settings_name_updated">名称已更新</string>
+    <string name="settings_name_update_failed">名称更新失败：%1$s</string>
     <string name="settings_delete_title">删除账户</string>
     <string name="settings_delete_message">将删除 %1$s 及其本地配置，服务器上的邮件不受影响。</string>
     <string name="settings_account_deleted">账户已删除</string>

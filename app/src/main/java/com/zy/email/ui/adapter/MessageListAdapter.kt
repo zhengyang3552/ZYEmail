@@ -27,6 +27,19 @@ class MessageListAdapter(
     private val onItemClick: (EmailMessage) -> Unit
 ) : ListAdapter<EmailMessage, MessageListAdapter.MessageViewHolder>(MessageDiffCallback()) {
 
+    /**
+     * 已发送模式：列表主标题展示收件人而非发件人（发件人是用户自己）。
+     * 由调用方在切换文件夹时设置，再提交新列表。
+     */
+    var sentMode: Boolean = false
+        private set
+
+    fun setSentMode(value: Boolean) {
+        if (sentMode == value) return
+        sentMode = value
+        notifyDataSetChanged()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
         val binding = ItemMessageBinding.inflate(
             LayoutInflater.from(parent.context),
@@ -47,11 +60,17 @@ class MessageListAdapter(
         fun bind(message: EmailMessage) {
             val context = binding.root.context
 
-            // 发件人：优先展示显示名，退化为地址
-            val sender = EmailUtils.displayNameOf(message.from)
-                .ifBlank { context.getString(R.string.message_unknown_sender) }
-            binding.tvFrom.text = sender
-            binding.tvAvatar.text = EmailUtils.initialOf(message.from)
+            // 收件箱展示发件人；已发送展示收件人（主标题语义为"对方是谁"）
+            val correspondentRaw = if (sentMode) message.to else message.from
+            val correspondent = EmailUtils.displayNameOf(correspondentRaw)
+                .ifBlank {
+                    context.getString(
+                        if (sentMode) R.string.message_unknown_recipient
+                        else R.string.message_unknown_sender
+                    )
+                }
+            binding.tvFrom.text = correspondent
+            binding.tvAvatar.text = EmailUtils.initialOf(correspondentRaw)
 
             binding.tvSubject.text = message.subject.ifBlank {
                 context.getString(R.string.message_no_subject)

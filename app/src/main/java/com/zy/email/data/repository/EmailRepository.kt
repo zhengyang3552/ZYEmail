@@ -75,13 +75,31 @@ object EmailRepository {
         }
     }
 
-    /** 拉取收件箱邮件（按时间倒序）。失败时抛出异常，由 ViewModel 转换提示。 */
+    /** 拉取指定文件夹的邮件（收件箱 / 已发送），按时间倒序。失败时抛出异常，由 ViewModel 转换提示。 */
     suspend fun fetchMessages(
         account: Account,
-        limit: Int = ImapMailboxManager.DEFAULT_LIMIT
+        limit: Int = ImapMailboxManager.DEFAULT_LIMIT,
+        folder: MailFolder = MailFolder.INBOX
     ): List<EmailMessage> = withContext(Dispatchers.IO) {
-        ImapMailboxManager.loadMessages(account, limit)
+        ImapMailboxManager.loadMessages(account, limit, folder)
     }
+
+    /**
+     * 修改账户显示名称（登录后随时可改）。
+     *
+     * 只更新 displayName 字段，密码 / 令牌等其余字段原样保留；
+     * 写入 Room 后，依赖 getAllAccounts Flow 的界面（主界面账户列表、
+     * 设置页账户列表）会自动刷新，写信页的发件人名称也会随之生效。
+     */
+    suspend fun updateDisplayName(account: Account, displayName: String): Account =
+        withContext(Dispatchers.IO) {
+            val updated = account.copy(
+                displayName = displayName.trim(),
+                updatedAt = System.currentTimeMillis()
+            )
+            RoomDatabaseManager.updateAccount(updated)
+            updated
+        }
 
     /** 发送邮件。地址解析与校验由调用方完成。 */
     suspend fun sendMail(
@@ -103,6 +121,15 @@ object EmailRepository {
             isHtml = isHtml
         )
     }
+}
+
+/** 邮箱文件夹 */
+enum class MailFolder {
+    /** 收件箱 */
+    INBOX,
+
+    /** 已发送（由 ImapMailboxManager 按服务商命名自动解析） */
+    SENT
 }
 
 /** 登录结果 */

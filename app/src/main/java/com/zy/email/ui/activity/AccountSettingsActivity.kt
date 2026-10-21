@@ -2,6 +2,7 @@ package com.zy.email.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -11,6 +12,7 @@ import com.zy.email.data.model.Account
 import com.zy.email.data.model.AccountType
 import com.zy.email.data.repository.EmailRepository
 import com.zy.email.databinding.ActivityAccountSettingsBinding
+import com.zy.email.databinding.DialogRenameAccountBinding
 import com.zy.email.databinding.ItemAccountSettingBinding
 import com.zy.email.ui.setVisible
 import com.zy.email.ui.showSuccess
@@ -114,6 +116,8 @@ class AccountSettingsActivity : AppCompatActivity() {
                 false
             )
             itemBinding.tvEmail.text = account.email
+            itemBinding.tvName.setVisible(account.displayName.isNotBlank())
+            itemBinding.tvName.text = account.displayName
             itemBinding.tvType.text = when (account.accountType) {
                 AccountType.SMTP -> getString(
                     R.string.settings_account_type_smtp,
@@ -121,9 +125,54 @@ class AccountSettingsActivity : AppCompatActivity() {
                 )
                 AccountType.OAUTH2 -> getString(R.string.settings_account_type_oauth2)
             }
+            itemBinding.btnEdit.setOnClickListener { showRenameDialog(account) }
             itemBinding.btnDelete.setOnClickListener { confirmDelete(account) }
 
             binding.accountListContainer.addView(itemBinding.root)
+        }
+    }
+
+    /**
+     * 修改账户显示名称。
+     *
+     * 写入 Room 后所有依赖账户 Flow 的界面自动同步：主界面账户列表、
+     * 本页列表，以及写信页的发件人显示名。
+     */
+    private fun showRenameDialog(account: Account) {
+        val dialogBinding = DialogRenameAccountBinding.inflate(layoutInflater)
+        dialogBinding.editName.setText(account.displayName)
+        dialogBinding.editName.setSelection(dialogBinding.editName.text?.length ?: 0)
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.settings_rename_title)
+            .setView(dialogBinding.root)
+            .setPositiveButton(R.string.action_save, null)
+            .setNegativeButton(R.string.action_cancel, null)
+            .create()
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val name = dialogBinding.editName.text?.toString()?.trim().orEmpty()
+            if (name.isEmpty()) {
+                dialogBinding.tilName.error = getString(R.string.settings_name_required)
+                return@setOnClickListener
+            }
+
+            lifecycleScope.launch {
+                try {
+                    EmailRepository.updateDisplayName(account, name)
+                    showMessage(getString(R.string.settings_name_updated))
+                    dialog.dismiss()
+                } catch (e: Exception) {
+                    showMessage(
+                        getString(
+                            R.string.settings_name_update_failed,
+                            ErrorMessages.from(this@AccountSettingsActivity, e)
+                        )
+                    )
+                    dialog.dismiss()
+                }
+            }
         }
     }
 

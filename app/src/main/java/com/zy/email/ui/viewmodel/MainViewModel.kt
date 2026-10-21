@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.zy.email.data.model.Account
 import com.zy.email.data.repository.EmailMessage
 import com.zy.email.data.repository.EmailRepository
+import com.zy.email.data.repository.MailFolder
 import com.zy.email.utils.ErrorMessages
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -60,12 +61,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var currentAccountId: Long = 0L
         private set
 
+    /** 当前浏览的文件夹（收件箱 / 已发送），供界面切换标签与空态文案 */
+    var currentFolder: MailFolder = MailFolder.INBOX
+        private set
+
     private var currentAccount: Account? = null
     private var loadJob: Job? = null
 
-    fun openAccount(account: Account) {
+    fun openAccount(account: Account, folder: MailFolder = MailFolder.INBOX) {
         currentAccountId = account.id
         currentAccount = account
+        currentFolder = folder
+        loadMessages()
+    }
+
+    /** 切换文件夹（收件箱 ⇄ 已发送），保留当前账户重新加载 */
+    fun switchFolder(folder: MailFolder) {
+        if (folder == currentFolder) return
+        currentFolder = folder
         loadMessages()
     }
 
@@ -81,17 +94,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadJob?.cancel()
         currentAccountId = 0L
         currentAccount = null
+        currentFolder = MailFolder.INBOX
         _mailState.value = MailUiState.Idle
     }
 
     private fun loadMessages() {
         val account = currentAccount ?: return
-        // 取消上一次请求：快速切换账户时避免旧结果覆盖新结果
+        // 取消上一次请求：快速切换账户/文件夹时避免旧结果覆盖新结果
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _mailState.value = MailUiState.Loading
             try {
-                val messages = repository.fetchMessages(account)
+                val messages = repository.fetchMessages(account, folder = currentFolder)
                 _mailState.value = if (messages.isEmpty()) {
                     MailUiState.Empty
                 } else {

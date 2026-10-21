@@ -17,6 +17,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.zy.email.R
 import com.zy.email.data.model.Account
 import com.zy.email.data.repository.EmailMessage
+import com.zy.email.data.repository.MailFolder
 import com.zy.email.ui.theme.ThemeManager
 import com.zy.email.databinding.ActivityMainBinding
 import com.zy.email.ui.adapter.AccountListAdapter
@@ -26,6 +27,7 @@ import com.zy.email.ui.showSuccess
 import com.zy.email.ui.tintMenuIcons
 import com.zy.email.ui.viewmodel.MailUiState
 import com.zy.email.ui.viewmodel.MainViewModel
+import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.launch
 
 /**
@@ -47,6 +49,9 @@ class MainActivity : AppCompatActivity() {
 
     private var accounts: List<Account> = emptyList()
     private var showingMessages = false
+
+    /** 程序化同步标签选中态时置 true，避免 onTabSelected 重复触发加载 */
+    private var suppressTabCallback = false
 
     /** 写信返回后若发送成功（RESULT_OK），刷新当前收件箱 */
     private val composeLauncher = registerForActivityResult(
@@ -82,6 +87,25 @@ class MainActivity : AppCompatActivity() {
         binding.toolbar.tintMenuIcons(R.color.m3_on_surface_variant)
         binding.toolbar.setNavigationOnClickListener { handleBack() }
         binding.toolbar.setOnMenuItemClickListener { onMenuItemSelected(it) }
+
+        // 文件夹切换：收件箱 ⇄ 已发送
+        binding.tabFolders.addTab(
+            binding.tabFolders.newTab().setText(R.string.main_tab_inbox)
+        )
+        binding.tabFolders.addTab(
+            binding.tabFolders.newTab().setText(R.string.main_tab_sent)
+        )
+        binding.tabFolders.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                if (suppressTabCallback) return
+                val folder = if (tab.position == 0) MailFolder.INBOX else MailFolder.SENT
+                viewModel.switchFolder(folder)
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+
+            override fun onTabReselected(tab: TabLayout.Tab) = Unit
+        })
 
         accountAdapter = AccountListAdapter { account -> viewModel.openAccount(account) }
         binding.rvAccounts.layoutManager = LinearLayoutManager(this)
@@ -145,6 +169,7 @@ class MainActivity : AppCompatActivity() {
         binding.toolbar.subtitle = getString(R.string.main_accounts_subtitle, list.size)
         binding.toolbar.setNavigationIcon(null)
         binding.toolbar.menu.findItem(R.id.action_refresh)?.isVisible = false
+        binding.tabFolders.setVisible(false)
 
         binding.rvAccounts.setVisible(true)
         binding.rvMessages.setVisible(false)
@@ -183,6 +208,7 @@ class MainActivity : AppCompatActivity() {
                 showMessagesLayout()
                 binding.progressBar.setVisible(false)
                 binding.emptyState.setVisible(false)
+                messageAdapter.setSentMode(viewModel.currentFolder == MailFolder.SENT)
                 messageAdapter.submitList(state.messages)
                 binding.toolbar.subtitle =
                     getString(R.string.main_messages_subtitle, state.messages.size)
@@ -192,11 +218,18 @@ class MainActivity : AppCompatActivity() {
                 showMessagesLayout()
                 binding.progressBar.setVisible(false)
                 messageAdapter.submitList(emptyList())
+                val sentMode = viewModel.currentFolder == MailFolder.SENT
                 showStatusPanel(
-                    iconRes = R.drawable.ic_inbox,
+                    iconRes = if (sentMode) R.drawable.ic_send else R.drawable.ic_inbox,
                     tintRes = R.color.m3_primary,
-                    title = getString(R.string.main_empty_messages_title),
-                    description = getString(R.string.main_empty_messages_desc),
+                    title = getString(
+                        if (sentMode) R.string.main_empty_sent_title
+                        else R.string.main_empty_messages_title
+                    ),
+                    description = getString(
+                        if (sentMode) R.string.main_empty_sent_desc
+                        else R.string.main_empty_messages_desc
+                    ),
                     actionText = getString(R.string.main_empty_action_refresh)
                 ) { viewModel.refresh() }
             }
@@ -224,6 +257,14 @@ class MainActivity : AppCompatActivity() {
         binding.rvMessages.setVisible(true)
         binding.fabCompose.setVisible(true)
         binding.swipeRefresh.isEnabled = true
+
+        // 同步文件夹标签选中态；clearSelection 后回到收件箱
+        val targetIndex = if (viewModel.currentFolder == MailFolder.SENT) 1 else 0
+        suppressTabCallback = true
+        binding.tabFolders.setVisible(true)
+        binding.tabFolders.getTabAt(targetIndex)?.select()
+        suppressTabCallback = false
+
         updateMessagesHeader()
     }
 
@@ -304,8 +345,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openMessageDetail(message: EmailMessage) {
+        val isSent = viewModel.currentFolder == MailFolder.SENT
         val intent = Intent(this, MessageDetailActivity::class.java).apply {
             putExtra(MessageDetailActivity.EXTRA_ACCOUNT_ID, viewModel.currentAccountId)
+            putExtra(MessageDetailActivity.EXTRA_IS_SENT, isSent)
             putExtra(MessageDetailActivity.EXTRA_SUBJECT, message.subject)
             putExtra(MessageDetailActivity.EXTRA_FROM, message.from)
             putExtra(MessageDetailActivity.EXTRA_TO, message.to)

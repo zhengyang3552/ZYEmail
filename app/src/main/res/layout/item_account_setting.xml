@@ -51,6 +51,18 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tvName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                android:textColor="@color/m3_primary"
+                android:visibility="gone"
+                tools:text="显示名称"
+                tools:visibility="visible" />
+
+            <TextView
                 android:id="@+id/tvEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -72,6 +84,15 @@
                 tools:text="SMTP / IMAP · imap.qq.com" />
 
         </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnEdit"
+            android:layout_width="@dimen/icon_avatar"
+            android:layout_height="@dimen/icon_avatar"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_rename_account"
+            android:src="@drawable/ic_edit"
+            app:tint="@color/m3_on_surface_variant" />
 
         <ImageButton
             android:id="@+id/btnDelete"

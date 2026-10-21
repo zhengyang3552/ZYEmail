@@ -40,6 +40,22 @@
             app:trackColor="@color/m3_surface_container_high"
             app:trackThickness="3dp" />
 
+        <!-- 文件夹切换：仅在浏览邮件时可见 -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabFolders"
+            style="@style/Widget.Material3.TabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/m3_surface"
+            android:visibility="gone"
+            app:tabGravity="fill"
+            app:tabIndicatorColor="@color/m3_primary"
+            app:tabMode="fixed"
+            app:tabRippleColor="@android:color/transparent"
+            app:tabSelectedTextColor="@color/m3_primary"
+            app:tabTextColor="@color/m3_on_surface_variant"
+            tools:visibility="visible" />
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
