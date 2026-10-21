@@ -1,5 +1,7 @@
 # ZYEmail - Android 邮箱客户端
 
+[![Build APK](https://github.com/zhengyang3552/ZYEmail/actions/workflows/build-apk.yml/badge.svg)](https://github.com/zhengyang3552/ZYEmail/actions/workflows/build-apk.yml)
+
 一个支持 SMTP 和 OAuth2 登录的 Android 邮箱客户端。
 
 ## 功能特性
@@ -84,13 +86,22 @@ ZYEmail/
 ### 环境要求
 - Android Studio Hedgehog 或更高版本
 - JDK 17
-- Android SDK 34
+- Android SDK 34（compileSdk 34 / build-tools 34.0.0，minSdk 24）
 
 ### 构建步骤
 1. 克隆仓库
 2. 在 Android Studio 中打开项目
 3. 等待 Gradle 同步完成
 4. 运行或构建 APK
+
+命令行构建（仓库内的 `gradlew` 是自定义脚本，会先检查 `ANDROID_HOME`）：
+
+```bash
+export ANDROID_HOME=/path/to/android-sdk
+export JAVA_HOME=/path/to/jdk17
+./gradlew :app:assembleDebug      # 产物：app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:lintDebug          # 代码检查
+```
 
 ## CI/CD
 

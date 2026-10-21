@@ -170,7 +170,27 @@ export JAVA_HOME=/path/to/jdk17
 | `META-INF/NOTICE.md` 打包冲突 | `android-mail` 与 `android-activation` 同名许可文件 | `packaging.resources.excludes` 排除 |
 | 自定义 `gradlew` 依赖 `ANDROID_HOME` | 仓库内 `gradlew` 不是官方 wrapper 脚本 | 按脚本要求设置环境变量（已在上面命令中说明） |
 
-### 4.2 静态校验
+### 4.2 持续集成
+
+`.github/workflows/build-apk.yml` 在 push / PR / 标签 / 手动触发时自动构建：
+
+| Job | 内容 | 产物 |
+| --- | --- | --- |
+| `build-debug` | JDK 17 + Gradle 8.2（setup-gradle 缓存）+ 补齐 SDK 34 → `assembleDebug` | `debug-apk`（约 5.5 MB） |
+| `lint` | `lintDebug`，输出错误/提示统计到 Step Summary | `lint-results`（html/xml/txt） |
+| `build-release` | 仅 `v*` 标签或手动触发，产出未签名 release 包 | `release-apk` |
+
+设计要点：
+
+- 使用 `gradle/actions/setup-gradle` 提供与本地一致的 Gradle 8.2 并缓存依赖，避免仓库内自定义 `gradlew` 每次下载 120MB 发行包；
+- 显式 `sdkmanager` 补齐 `platforms;android-34` 与 `build-tools;34.0.0`，不依赖 runner 镜像的版本漂移；
+- 并发分组 `concurrency` 自动取消同分支的旧构建；
+- 修正了原工作流的 lint 报告路径（AGP 8 输出为 `lint-results-debug.html`，原路径 `lint-results.html` 永远取不到文件）；
+- release job 加了触发条件，避免每次 PR 都跑（原来每次都会执行）。
+
+首次运行结果：`build-debug` 与 `lint` 均通过，产物 `debug-apk` 5.47 MB、`lint-results` 26 KB。
+
+### 4.3 静态校验
 
 1. `res/` 全部 XML 通过解析校验（并修正了注释中出现 `--` 导致 AAPT 报错的写法）；
 2. 资源引用完整性校验：布局/主题/清单中所有 `@color|@dimen|@string|@drawable|@style|@bool|@menu` 均可在项目中解析；
