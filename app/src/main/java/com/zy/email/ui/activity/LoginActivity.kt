@@ -1,168 +1,196 @@
 package com.zy.email.ui.activity
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.widget.Toast
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.zy.email.R
-import com.zy.email.data.model.Account
-import com.zy.email.data.model.detectAccountType
-import com.zy.email.data.model.getImapDefaults
-import com.zy.email.data.model.getSmtpDefaults
-import com.zy.email.data.repository.EmailRepository
-import com.zy.email.data.repository.LoginResult
+import com.zy.email.data.model.requiresOAuth2ByDefault
 import com.zy.email.databinding.ActivityLoginBinding
+import com.zy.email.ui.setVisible
+import com.zy.email.ui.viewmodel.LoginUiState
 import com.zy.email.ui.viewmodel.LoginViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
+import com.zy.email.utils.EmailUtils
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
+/**
+ * 登录页。
+ *
+ * 两种进入方式：
+ *  · 作为启动页：本地已有账户时直接进入主界面（[EXTRA_ADD_MODE] 为 false）
+ *  · 从主界面"添加账户"进入：始终停留在表单（[EXTRA_ADD_MODE] 为 true）
+ *
+ * 原实现把这两种场景混为一谈——启动即调用 startAutoLogin 并提示"已自动登录"，
+ * 用户想再添加一个账户就会被立刻弹回主界面。
+ */
 class LoginActivity : AppCompatActivity() {
-    
+
+    companion object {
+        const val EXTRA_ADD_MODE = "extra_add_mode"
+    }
+
     private lateinit var binding: ActivityLoginBinding
     private val viewModel: LoginViewModel by viewModels()
-    
+
+    private var addMode = false
+    private var useAppPassword = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        
+
+        addMode = intent.getBooleanExtra(EXTRA_ADD_MODE, false)
+
         setupViews()
-        observeLoginState()
-        viewModel.startAutoLogin()
+        observeState()
+        viewModel.checkSession(skipWhenAccountsExist = !addMode)
     }
-    
+
     private fun setupViews() {
+        if (addMode) {
+            binding.btnCancel.text = getString(R.string.action_cancel)
+        }
+
         binding.editEmail.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) return@setOnFocusChangeListener
-            val email = binding.editEmail.text.toString().trim()
-            if (email.contains("@")) {
-                val accountType = detectAccountType(email)
-                updateAccountTypeUI(accountType)
-            }
+            if (!hasFocus) updateTypeHint(binding.editEmail.text?.toString().orEmpty())
         }
-        
-        binding.btnLogin.setOnClickListener {
-            val email = binding.editEmail.text.toString().trim()
-            val password = binding.editPassword.text.toString().trim()
-            val displayName = binding.editDisplayName.text.toString().trim()
-            
-            if (email.isEmpty()) {
-                binding.editEmail.error = "请输入邮箱地址"
-                return@setOnClickListener
-            }
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                binding.editEmail.error = "邮箱地址格式不正确"
-                return@setOnClickListener
-            }
-            if (password.isEmpty()) {
-                binding.editPassword.error = "请输入密码或授权码"
-                return@setOnClickListener
-            }
-            
-            performLogin(email, password, displayName)
+
+        binding.switchAppPassword.setOnCheckedChangeListener { _, isChecked ->
+            useAppPassword = isChecked
+            updateTypeHint(binding.editEmail.text?.toString().orEmpty())
         }
-        
-        binding.btnCancel.setOnClickListener {
-            finish()
-        }
+
+        binding.btnLogin.setOnClickListener { submit() }
+        binding.btnCancel.setOnClickListener { finish() }
     }
-    
-    private fun updateAccountTypeUI(accountType: com.zy.email.data.model.AccountType) {
-        when (accountType) {
-            com.zy.email.data.model.AccountType.OAUTH2 -> {
-                binding.tvTypeHint.text = "检测到Microsoft/Google邮箱，将使用安全登录方式"
-                binding.tvTypeHint.visibility = View.VISIBLE
-            }
-            com.zy.email.data.model.AccountType.SMTP -> {
-                binding.tvTypeHint.text = "请输入QQ/163等邮箱的密码或授权码"
-                binding.tvTypeHint.visibility = View.VISIBLE
-            }
-        }
-    }
-    
-    private fun performLogin(email: String, password: String, displayName: String) {
-        binding.progressBar.visibility = View.VISIBLE
-        binding.btnLogin.isEnabled = false
-        
+
+    private fun observeState() {
         lifecycleScope.launch {
-            val accountType = detectAccountType(email)
-            val (smtpServer, smtpPort) = getSmtpDefaults(email)
-            val (imapServer, imapPort) = getImapDefaults(email)
-            
-            val account = Account(
-                email = email,
-                displayName = displayName,
-                password = password,
-                accountType = accountType,
-                smtpServer = smtpServer,
-                smtpPort = smtpPort,
-                smtpSecure = if (smtpPort == 587) "TLS" else "SSL",
-                imapServer = imapServer,
-                imapPort = imapPort,
-                imapSecure = "SSL"
+            viewModel.state.collect { state -> render(state) }
+        }
+    }
+
+    private fun render(state: LoginUiState) {
+        val busy = state is LoginUiState.Submitting
+
+        binding.progressBar.setVisible(busy)
+        binding.btnLogin.isEnabled = !busy
+        binding.btnLogin.text = getString(
+            if (busy) R.string.login_btn_loading else R.string.login_btn
+        )
+        binding.editEmail.isEnabled = !busy
+        binding.editPassword.isEnabled = !busy
+        binding.editDisplayName.isEnabled = !busy
+        binding.switchAppPassword.isEnabled = !busy
+
+        when (state) {
+            LoginUiState.Idle, LoginUiState.Ready, LoginUiState.Submitting -> Unit
+
+            LoginUiState.NavigateToMain -> {
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
+
+            is LoginUiState.Success -> onLoginSuccess()
+
+            is LoginUiState.Error -> {
+                showHint(state.message, isError = true)
+                viewModel.consumeTransientState()
+            }
+
+            is LoginUiState.NeedsAppPassword -> {
+                showHint(state.message, isError = true)
+                // 提供可操作的下一步：打开"应用专用密码"开关
+                binding.switchAppPassword.setVisible(true)
+                viewModel.consumeTransientState()
+            }
+        }
+    }
+
+    private fun onLoginSuccess() {
+        // 页面即将关闭，Toast/Snackbar 都来不及展示，改为直接把结果回传给调用方
+        setResult(RESULT_OK)
+
+        if (!addMode) {
+            startActivity(Intent(this, MainActivity::class.java))
+        }
+        finish()
+    }
+
+    private fun submit() {
+        val email = binding.editEmail.text?.toString()?.trim().orEmpty()
+        val password = binding.editPassword.text?.toString().orEmpty()
+        val displayName = binding.editDisplayName.text?.toString()?.trim().orEmpty()
+
+        binding.tilEmail.error = null
+        binding.tilPassword.error = null
+
+        if (email.isEmpty()) {
+            binding.tilEmail.error = getString(R.string.login_error_email_required)
+            binding.editEmail.requestFocus()
+            return
+        }
+        if (!EmailUtils.isValidEmail(email)) {
+            binding.tilEmail.error = getString(R.string.login_error_email_invalid)
+            binding.editEmail.requestFocus()
+            return
+        }
+        if (password.isEmpty()) {
+            binding.tilPassword.error = getString(R.string.login_error_password_required)
+            binding.editPassword.requestFocus()
+            return
+        }
+
+        hideKeyboard()
+        showHint(null, isError = false)
+        viewModel.submit(email, password, displayName, useAppPassword)
+    }
+
+    /**
+     * 更新账户类型提示。
+     *
+     * 检测到 Outlook / Gmail 域名时，除了说明默认需要 OAuth2，还会显示
+     * "使用应用专用密码登录"开关——这是当前版本下让这类邮箱可用的唯一路径。
+     */
+    private fun updateTypeHint(email: String) {
+        if (!email.contains("@")) {
+            binding.tvTypeHint.setVisible(false)
+            binding.switchAppPassword.setVisible(false)
+            return
+        }
+
+        val oauthByDefault = requiresOAuth2ByDefault(email)
+        binding.switchAppPassword.setVisible(oauthByDefault)
+
+        if (oauthByDefault && !useAppPassword) {
+            showHint(getString(R.string.login_hint_oauth2), isError = false)
+        } else {
+            showHint(getString(R.string.login_hint_smtp), isError = false)
+        }
+    }
+
+    private fun showHint(message: String?, isError: Boolean) {
+        if (message.isNullOrBlank()) {
+            binding.tvTypeHint.setVisible(false)
+            return
+        }
+        binding.tvTypeHint.text = message
+        binding.tvTypeHint.setTextColor(
+            ContextCompat.getColor(
+                this,
+                if (isError) R.color.m3_error else R.color.m3_on_surface_variant
             )
-            
-            val result = EmailRepository.loginAccount(account)
-            
-            when (result) {
-                is LoginResult.Success -> {
-                    val savedAccount = EmailRepository.saveAccount(account)
-                    withContext(Dispatchers.Main) {
-                        binding.progressBar.visibility = View.GONE
-                        binding.btnLogin.isEnabled = true
-                        Toast.makeText(this@LoginActivity, "登录成功！", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-                        finish()
-                    }
-                }
-                is LoginResult.Error -> {
-                    withContext(Dispatchers.Main) {
-                        binding.progressBar.visibility = View.GONE
-                        binding.btnLogin.isEnabled = true
-                        Toast.makeText(this@LoginActivity, result.message, Toast.LENGTH_LONG).show()
-                    }
-                }
-                is LoginResult.NeedsAuthorization -> {
-                    withContext(Dispatchers.Main) {
-                        binding.progressBar.visibility = View.GONE
-                        binding.btnLogin.isEnabled = true
-                        viewModel.startOAuth2Auth(email, password, displayName)
-                        Toast.makeText(this@LoginActivity, "正在跳转到浏览器进行安全登录...", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }
+        )
+        binding.tvTypeHint.setVisible(true)
     }
-    
-    private fun observeLoginState() {
-        lifecycleScope.launch {
-            viewModel.loginState.collectLatest { state ->
-                when (state) {
-                    is LoginViewModel.LoginState.OAuth2Success -> {
-                        binding.progressBar.visibility = View.GONE
-                        binding.btnLogin.isEnabled = true
-                        Toast.makeText(this@LoginActivity, "OAuth2授权成功！", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-                        finish()
-                    }
-                    is LoginViewModel.LoginState.OAuth2Error -> {
-                        binding.progressBar.visibility = View.GONE
-                        binding.btnLogin.isEnabled = true
-                        Toast.makeText(this@LoginActivity, state.message, Toast.LENGTH_LONG).show()
-                    }
-                    is LoginViewModel.LoginState.AutoLoginSuccess -> {
-                        Toast.makeText(this@LoginActivity, "已自动登录！", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-                        finish()
-                    }
-                    else -> {}
-                }
-            }
-        }
+
+    private fun hideKeyboard() {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager ?: return
+        imm.hideSoftInputFromWindow(binding.root.windowToken, 0)
     }
 }

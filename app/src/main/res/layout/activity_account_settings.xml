@@ -1,12 +1,272 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    设置页
+    ——————————————————————————————————————————————————————————————————
+    相比原先基于 PreferenceFragment 的实现，这里改用原生布局：
+      · 原实现依赖 supportActionBar，而主题为 NoActionBar，导致页面
+        既没有标题也没有返回按钮；此处统一使用 MaterialToolbar。
+      · 账户列表改用卡片列表，删除账户的入口更明确。
+      · 新增「外观」分组，提供跟随系统 / 浅色 / 深色三档切换。
+    ——————————————————————————————————————————————————————————————————
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <FrameLayout
-        android:id="@+id/settings_container"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content"
+        android:background="@color/m3_surface"
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationContentDescription="@string/action_back"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:title="@string/settings_title" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/space_4"
+            android:paddingTop="@dimen/space_2"
+            android:paddingEnd="@dimen/space_4"
+            android:paddingBottom="@dimen/space_8">
+
+            <!-- ===== 账户 ===== -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_1"
+                android:layout_marginBottom="@dimen/space_2"
+                android:text="@string/settings_section_accounts"
+                android:textAppearance="@style/TextAppearance.ZYEmail.LabelLarge"
+                android:textColor="@color/m3_primary" />
+
+            <LinearLayout
+                android:id="@+id/accountListContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/tvEmptyAccounts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_2"
+                android:layout_marginBottom="@dimen/space_2"
+                android:text="@string/settings_empty_accounts"
+                android:textAppearance="@style/TextAppearance.ZYEmail.BodyMedium"
+                android:textColor="@color/m3_on_surface_variant"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddAccount"
+                style="@style/Widget.ZYEmail.Button.Tonal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_2"
+                android:text="@string/settings_add_account"
+                app:icon="@drawable/ic_add"
+                app:iconGravity="textStart" />
+
+            <!-- ===== 外观 ===== -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_1"
+                android:layout_marginTop="@dimen/space_6"
+                android:layout_marginBottom="@dimen/space_2"
+                android:text="@string/settings_section_appearance"
+                android:textAppearance="@style/TextAppearance.ZYEmail.LabelLarge"
+                android:textColor="@color/m3_primary" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.ZYEmail.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioGroup
+                    android:id="@+id/radioGroupTheme"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="@dimen/space_2"
+                    android:paddingBottom="@dimen/space_2">
+
+                    <LinearLayout
+                        android:id="@+id/rowThemeSystem"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/touch_target_min"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="@dimen/space_4"
+                        android:paddingEnd="@dimen/space_3">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_default"
+                            android:layout_height="@dimen/icon_default"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_auto_mode"
+                            app:tint="@color/m3_on_surface_variant" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/space_4"
+                            android:layout_weight="1"
+                            android:text="@string/settings_theme_system"
+                            android:textAppearance="@style/TextAppearance.ZYEmail.BodyLarge"
+                            android:textColor="@color/m3_on_surface" />
+
+                        <RadioButton
+                            android:id="@+id/rbThemeSystem"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="false"
+                            android:focusable="false" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowThemeLight"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/touch_target_min"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="@dimen/space_4"
+                        android:paddingEnd="@dimen/space_3">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_default"
+                            android:layout_height="@dimen/icon_default"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_light_mode"
+                            app:tint="@color/m3_on_surface_variant" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/space_4"
+                            android:layout_weight="1"
+                            android:text="@string/settings_theme_light"
+                            android:textAppearance="@style/TextAppearance.ZYEmail.BodyLarge"
+                            android:textColor="@color/m3_on_surface" />
+
+                        <RadioButton
+                            android:id="@+id/rbThemeLight"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="false"
+                            android:focusable="false" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowThemeDark"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/touch_target_min"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="@dimen/space_4"
+                        android:paddingEnd="@dimen/space_3">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_default"
+                            android:layout_height="@dimen/icon_default"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_dark_mode"
+                            app:tint="@color/m3_on_surface_variant" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/space_4"
+                            android:layout_weight="1"
+                            android:text="@string/settings_theme_dark"
+                            android:textAppearance="@style/TextAppearance.ZYEmail.BodyLarge"
+                            android:textColor="@color/m3_on_surface" />
+
+                        <RadioButton
+                            android:id="@+id/rbThemeDark"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="false"
+                            android:focusable="false" />
+
+                    </LinearLayout>
+
+                </RadioGroup>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ===== 关于 ===== -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_1"
+                android:layout_marginTop="@dimen/space_6"
+                android:layout_marginBottom="@dimen/space_2"
+                android:text="@string/settings_section_about"
+                android:textAppearance="@style/TextAppearance.ZYEmail.LabelLarge"
+                android:textColor="@color/m3_primary" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.ZYEmail.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/space_4">
+
+                    <TextView
+                        android:id="@+id/tvVersion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.ZYEmail.TitleSmall"
+                        android:textColor="@color/m3_on_surface"
+                        tools:text="版本 1.0.0" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_2"
+                        android:text="@string/settings_about_desc"
+                        android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                        android:textColor="@color/m3_on_surface_variant" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>

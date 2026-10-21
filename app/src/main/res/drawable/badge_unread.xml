@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 未读标记：主色圆点，颜色随明暗模式自动切换 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="#FF1976D2"/>
-    <size android:width="8dp" android:height="8dp"/>
+    <solid android:color="@color/m3_primary" />
+    <size
+        android:width="8dp"
+        android:height="8dp" />
 </shape>

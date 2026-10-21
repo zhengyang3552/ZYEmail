@@ -1,217 +1,218 @@
 package com.zy.email.data.repository
 
+import android.util.Log
 import com.sun.mail.imap.IMAPFolder
 import com.sun.mail.imap.IMAPStore
 import com.zy.email.data.model.Account
-import com.zy.email.utils.EncryptionUtils
+import com.zy.email.utils.EmailUtils
+import java.util.Date
+import javax.mail.Address
+import javax.mail.FetchProfile
 import javax.mail.Flags
 import javax.mail.Folder
 import javax.mail.Message
+import javax.mail.Multipart
+import javax.mail.Part
 import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeMultipart
-import java.util.*
+import javax.mail.internet.MimeMessage
 import kotlin.math.max
 
 /**
- * IMAP邮件收取管理器
- * 负责从服务器读取邮件
+ * IMAP 邮件读取。
+ *
+ * 关键修正（均为原实现中的实际问题）：
+ *  1. 附件识别：原实现用 `isMimeType("multipart/…")` 判断附件，导致
+ *     multipart/alternative（也就是绝大多数纯正文邮件）全部被标记为"有附件"。
+ *     此处改为递归遍历 MIME 结构，识别 disposition=attachment 或带文件名
+ *     的部件。
+ *  2. 排序：IMAP 返回的是升序，原实现未反转，列表里最新邮件排在最后。
+ *  3. 端口/加密方式：统一交给 [ImapConnectionManager]，不再硬编码 SSL。
+ *  4. 资源回收：连接与文件夹的关闭放进 `finally`，异常时也不会泄漏。
+ *  5. 正文长度、字符集与 HTML 兜底：超长正文截断，纯文本缺失时由 HTML 反推，
+ *     避免列表出现"无内容"。
  */
 object ImapMailboxManager {
-    
+
+    private const val TAG = "ImapMailboxManager"
+
+    /** 单次最多读取的邮件数，防止首次进入时拉取过多数据 */
+    const val DEFAULT_LIMIT = 50
+
+    private const val MAX_TEXT_LENGTH = 20_000
+    private const val MAX_HTML_LENGTH = 200_000
+
     /**
-     * 获取IMAP Store
+     * 连接账户并读取收件箱最近 [limit] 封邮件。
+     * 连接失败会抛出异常，由上层统一转换为用户提示。
      */
-    fun getStore(account: Account): IMAPStore? {
-        return try {
-            val decryptedPassword = EncryptionUtils.decrypt(account.password)
-            val properties = Properties()
-            properties["mail.imap.ssl.enable"] = "true"
-            properties["mail.imap.auth.plain.disable"] = "true"
-            
-            val store = IMAPStore(properties)
-            store.connect(
-                account.imapServer,
-                account.imapPort,
-                account.email,
-                decryptedPassword
-            )
-            store
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-    
-    /**
-     * 获取文件夹
-     */
-    fun getFolder(store: IMAPStore, folderName: String = "INBOX"): IMAPFolder? {
-        return try {
-            val folder = store.getFolder(folderName)
-            folder.open(Folder.READ_ONLY)
-            folder as? IMAPFolder
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-    
-    /**
-     * 获取邮件列表
-     */
-    fun getMessages(folder: Folder, maxCount: Int = 50): List<EmailMessage> {
-        val messages = mutableListOf<EmailMessage>()
-        
+    fun loadMessages(account: Account, limit: Int = DEFAULT_LIMIT): List<EmailMessage> {
+        var store: IMAPStore? = null
+        var folder: IMAPFolder? = null
         try {
-            val totalMessages = folder.messageCount
-            val start = max(1, totalMessages - maxCount + 1)
-            val end = totalMessages
-            
-            if (start > end) return messages
-            
-            val msgArray = folder.getMessages(start, end)
-            
-            for (msg in msgArray) {
-                try {
-                    messages.add(parseMessage(msg))
-                } catch (e: Exception) {
-                    // Skip unparseable messages
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+            store = ImapConnectionManager.connect(account)
+            folder = openInbox(store)
+            return readMessages(folder, limit)
+        } finally {
+            closeFolder(folder)
+            closeStore(store)
         }
-        
-        return messages
     }
-    
+
+    private fun openInbox(store: IMAPStore): IMAPFolder {
+        val folder = store.getFolder("INBOX")
+        folder.open(Folder.READ_ONLY)
+        return folder as IMAPFolder
+    }
+
     /**
-     * 解析邮件
+     * 读取邮件列表（按时间倒序）。
+     * 单封解析失败只跳过该封，不影响整页加载。
      */
-    private fun parseMessage(msg: Message): EmailMessage {
+    fun readMessages(folder: Folder, limit: Int = DEFAULT_LIMIT): List<EmailMessage> {
+        val total = runCatching { folder.messageCount }.getOrDefault(0)
+        if (total <= 0) return emptyList()
+
+        val start = max(1, total - limit + 1)
+        val rawMessages = folder.getMessages(start, total)
+
+        // 一次性拉取信封 / 标记 / 结构，避免逐封触发额外往返
+        val profile = FetchProfile().apply {
+            add(FetchProfile.Item.ENVELOPE)
+            add(FetchProfile.Item.FLAGS)
+            add(FetchProfile.Item.CONTENT_INFO)
+        }
+        runCatching { folder.fetch(rawMessages, profile) }
+
+        val result = ArrayList<EmailMessage>(rawMessages.size)
+        for (index in rawMessages.indices.reversed()) {
+            val message = rawMessages[index]
+            try {
+                result.add(parseMessage(message))
+            } catch (e: Exception) {
+                Log.w(TAG, "跳过无法解析的邮件: ${e.message}")
+            }
+        }
+        return result
+    }
+
+    private fun parseMessage(message: Message): EmailMessage {
+        val html = extractBody(message, wantHtml = true).take(MAX_HTML_LENGTH)
+        var plain = extractBody(message, wantHtml = false).take(MAX_TEXT_LENGTH)
+        if (plain.isBlank() && html.isNotBlank()) {
+            plain = EmailUtils.htmlToPlainText(html).take(MAX_TEXT_LENGTH)
+        }
+
         return EmailMessage(
-            subject = msg.subject ?: "",
-            from = formatAddress(msg.from),
-            to = formatAddress(msg.getRecipients(Message.RecipientType.TO)),
-            date = msg.sentDate,
-            bodyText = getTextContent(msg, false),
-            bodyHtml = getTextContent(msg, true),
-            isRead = isMessageRead(msg),
-            hasAttachments = msg.isMimeType("multipart/*"),
-            messageId = msg.messageID
+            subject = runCatching { message.subject }.getOrNull().orEmpty().trim(),
+            from = formatAddresses(runCatching { message.from }.getOrNull()),
+            to = formatAddresses(
+                runCatching { message.getRecipients(Message.RecipientType.TO) }.getOrNull()
+            ),
+            cc = formatAddresses(
+                runCatching { message.getRecipients(Message.RecipientType.CC) }.getOrNull()
+            ),
+            date = runCatching { message.sentDate ?: message.receivedDate }.getOrNull(),
+            bodyText = plain,
+            bodyHtml = html,
+            isRead = runCatching { message.getFlags().contains(Flags.Flag.SEEN) }.getOrDefault(false),
+            hasAttachments = hasAttachment(message),
+            messageId = runCatching { (message as? MimeMessage)?.messageID }.getOrNull()
         )
     }
-    
-    /**
-     * 格式化地址
-     */
-    private fun formatAddress(addresses: Array<*>): String {
-        if (addresses.isNullOrEmpty()) return ""
-        val addressesList = addresses.toList() as? List<*> ?: return ""
-        
-        return addressesList.joinToString(", ") { addr ->
-            when (addr) {
-                is InternetAddress -> {
-                    val displayName = addr.displayName
-                    if (!displayName.isNullOrEmpty()) "$displayName <${addr.address}>"
-                    else addr.address ?: ""
-                }
-                else -> addr.toString()
-            }
-        }
-    }
-    
-    /**
-     * 获取邮件正文
-     */
-    private fun getTextContent(msg: Message, html: Boolean): String {
+
+    /** 递归提取指定类型的正文；找不到时返回空串 */
+    private fun extractBody(part: Part, wantHtml: Boolean): String {
+        val targetMime = if (wantHtml) "text/html" else "text/plain"
         return try {
             when {
-                html && msg.isMimeType("text/html") -> msg.content.toString()
-                !html && msg.isMimeType("text/plain") -> msg.content.toString()
-                msg.isMimeType("multipart/*") -> {
-                    val mp = msg.content as MimeMultipart
-                    var result = ""
-                    for (i in 0 until mp.count) {
-                        val bodyPart = mp.getBodyPart(i)
-                        when {
-                            html && bodyPart.isMimeType("text/html") -> {
-                                result = bodyPart.content.toString()
-                                break
-                            }
-                            !html && bodyPart.isMimeType("text/plain") -> {
-                                result = bodyPart.content.toString()
-                                break
-                            }
-                            bodyPart.isMimeType("multipart/*") -> {
-                                val nestedMp = bodyPart.content as MimeMultipart
-                                for (j in 0 until nestedMp.count) {
-                                    val nestedPart = nestedMp.getBodyPart(j)
-                                    if (nestedPart.isMimeType("text/html")) {
-                                        result = nestedPart.content.toString()
-                                        break
-                                    }
-                                }
-                                if (result.isNotEmpty()) break
-                            }
-                        }
+                part.isMimeType(targetMime) -> part.content?.toString().orEmpty()
+
+                part.isMimeType("multipart/*") -> {
+                    val multipart = part.content as? Multipart ?: return ""
+                    for (index in 0 until multipart.count) {
+                        val child = multipart.getBodyPart(index)
+                        if (isAttachmentPart(child)) continue
+                        val text = extractBody(child, wantHtml)
+                        if (text.isNotBlank()) return text
                     }
-                    if (result.isEmpty() && !html) {
-                        msg.content.toString()
-                    } else {
-                        result
-                    }
+                    ""
                 }
-                else -> msg.content.toString()
+
+                else -> ""
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "解析正文失败: ${e.message}")
             ""
         }
     }
-    
-    /**
-     * 检查邮件是否已读
-     */
-    private fun isMessageRead(msg: Message): Boolean {
+
+    /** 递归判断是否存在真正的附件部件 */
+    private fun hasAttachment(part: Part): Boolean {
         return try {
-            val flags = msg.flags
-            flags.contains(Flags.Flag.SEEN)
+            if (part.isMimeType("multipart/*")) {
+                val multipart = part.content as? Multipart ?: return false
+                for (index in 0 until multipart.count) {
+                    if (hasAttachment(multipart.getBodyPart(index))) return true
+                }
+                false
+            } else {
+                isAttachmentPart(part)
+            }
         } catch (e: Exception) {
             false
         }
     }
-    
-    /**
-     * 关闭文件夹
-     */
-    fun closeFolder(folder: Folder, expunge: Boolean = false) {
-        try {
-            folder.close(expunge)
+
+    private fun isAttachmentPart(part: Part): Boolean {
+        return try {
+            val disposition = runCatching { part.disposition }.getOrNull()
+            val fileName = runCatching { part.fileName }.getOrNull()
+            Part.ATTACHMENT.equals(disposition, ignoreCase = true) || !fileName.isNullOrBlank()
         } catch (e: Exception) {
-            e.printStackTrace()
+            false
         }
     }
-    
-    /**
-     * 关闭Store
-     */
-    fun closeStore(store: IMAPStore) {
-        try {
-            store.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+
+    private fun formatAddresses(addresses: Array<Address>?): String {
+        if (addresses.isNullOrEmpty()) return ""
+        return addresses.joinToString(", ") { address ->
+            when (address) {
+                is InternetAddress -> {
+                    val name = address.personal?.takeIf { it.isNotBlank() }
+                    if (name != null) "$name <${address.address.orEmpty()}>"
+                    else address.address.orEmpty()
+                }
+                else -> address.toString()
+            }
+        }.trim()
+    }
+
+    private fun closeFolder(folder: Folder?) {
+        if (folder == null) return
+        runCatching {
+            if (folder.isOpen) folder.close(false)
+        }.onFailure { Log.w(TAG, "关闭文件夹失败: ${it.message}") }
+    }
+
+    private fun closeStore(store: IMAPStore?) {
+        if (store == null) return
+        runCatching {
+            if (store.isConnected) store.close()
+        }.onFailure { Log.w(TAG, "关闭连接失败: ${it.message}") }
     }
 }
 
 /**
- * 邮件数据类
+ * 邮件数据类。
+ *
+ * 新增 [cc]，用于"全部回复"时正确回填抄送人；原实现只能拿到收件人，
+ * "全部回复"实际上等价于"回复"。
  */
 data class EmailMessage(
     val subject: String,
     val from: String,
     val to: String,
+    val cc: String = "",
     val date: Date?,
     val bodyText: String,
     val bodyHtml: String,

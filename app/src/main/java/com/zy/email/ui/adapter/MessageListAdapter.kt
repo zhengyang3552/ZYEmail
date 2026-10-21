@@ -1,25 +1,32 @@
 package com.zy.email.ui.adapter
 
+import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.zy.email.R
-import com.zy.email.databinding.ItemMessageBinding
 import com.zy.email.data.repository.EmailMessage
-import java.text.SimpleDateFormat
-import java.util.*
+import com.zy.email.databinding.ItemMessageBinding
+import com.zy.email.ui.setVisible
+import com.zy.email.utils.DateFormatUtils
+import com.zy.email.utils.EmailUtils
 
 /**
- * 邮件列表适配器
+ * 邮件列表适配器。
+ *
+ * 未读状态用三重信号表达，避免只靠颜色区分（对色觉障碍用户更友好）：
+ *  1. 发件人加粗
+ *  2. 主色未读圆点
+ *  3. 卡片使用高一级的表面容器（surface_container vs surface_container_low）
+ * 所有颜色均取自语义令牌，深色模式下自动反转。
  */
 class MessageListAdapter(
     private val onItemClick: (EmailMessage) -> Unit
 ) : ListAdapter<EmailMessage, MessageListAdapter.MessageViewHolder>(MessageDiffCallback()) {
-    
-    private val dateFormat = SimpleDateFormat("MM-dd HH:mm", Locale.CHINA)
-    
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
         val binding = ItemMessageBinding.inflate(
             LayoutInflater.from(parent.context),
@@ -28,58 +35,83 @@ class MessageListAdapter(
         )
         return MessageViewHolder(binding)
     }
-    
+
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         holder.bind(getItem(position))
     }
-    
+
     inner class MessageViewHolder(
         private val binding: ItemMessageBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-        
+
         fun bind(message: EmailMessage) {
-            // 发件人
-            binding.tvFrom.text = message.from
-            
-            // 主题
-            binding.tvSubject.text = message.subject
-            
-            // 预览（去掉HTML标签）
-            val preview = message.bodyText.replace(Regex("<[^>]*>"), "").take(50)
-            binding.tvPreview.text = if (preview.isEmpty()) "无内容" else preview
-            
-            // 日期
-            message.date?.let {
-                binding.tvDate.text = dateFormat.format(it)
+            val context = binding.root.context
+
+            // 发件人：优先展示显示名，退化为地址
+            val sender = EmailUtils.displayNameOf(message.from)
+                .ifBlank { context.getString(R.string.message_unknown_sender) }
+            binding.tvFrom.text = sender
+            binding.tvAvatar.text = EmailUtils.initialOf(message.from)
+
+            binding.tvSubject.text = message.subject.ifBlank {
+                context.getString(R.string.message_no_subject)
             }
-            
-            // 未读标记
-            if (!message.isRead) {
-                binding.tvFrom.setTextColor(binding.root.context.getColor(R.color.unread_from))
-                binding.tvSubject.setTextColor(binding.root.context.getColor(R.color.unread_subject))
-                binding.ivUnread.visibility = android.view.View.VISIBLE
-            } else {
-                binding.tvFrom.setTextColor(binding.root.context.getColor(R.color.read_from))
-                binding.tvSubject.setTextColor(binding.root.context.getColor(R.color.read_subject))
-                binding.ivUnread.visibility = android.view.View.GONE
+
+            val dateText = DateFormatUtils.forList(message.date)
+            binding.tvDate.text = dateText
+            binding.tvDate.setVisible(dateText.isNotEmpty())
+
+            // 预览：纯文本为空时用 HTML 反推，绝不把标签直接显示出来
+            val preview = message.bodyText.trim()
+                .ifEmpty { EmailUtils.htmlToPlainText(message.bodyHtml) }
+            binding.tvPreview.text = preview.ifEmpty {
+                context.getString(R.string.message_no_preview)
             }
-            
-            // 附件标记
-            binding.ivAttachment.visibility = if (message.hasAttachments) 
-                android.view.View.VISIBLE else android.view.View.GONE
-            
-            // 点击事件
-            binding.root.setOnClickListener {
-                onItemClick(message)
-            }
+
+            val unread = !message.isRead
+            binding.ivUnread.setVisible(unread)
+
+            binding.tvFrom.setTypeface(null, if (unread) Typeface.BOLD else Typeface.NORMAL)
+            binding.tvFrom.setTextColor(ContextCompat.getColor(context, R.color.m3_on_surface))
+
+            binding.tvSubject.setTextColor(
+                ContextCompat.getColor(
+                    context,
+                    if (unread) R.color.m3_on_surface else R.color.m3_on_surface_variant
+                )
+            )
+            binding.tvPreview.setTextColor(
+                ContextCompat.getColor(context, R.color.m3_on_surface_variant)
+            )
+
+            binding.cardRoot.setCardBackgroundColor(
+                ContextCompat.getColor(
+                    context,
+                    if (unread) R.color.m3_surface_container else R.color.m3_surface_container_low
+                )
+            )
+
+            binding.ivAttachment.setVisible(message.hasAttachments)
+
+            binding.root.setOnClickListener { onItemClick(message) }
         }
     }
-    
+
     class MessageDiffCallback : DiffUtil.ItemCallback<EmailMessage>() {
+
         override fun areItemsTheSame(oldItem: EmailMessage, newItem: EmailMessage): Boolean {
-            return oldItem.messageId == newItem.messageId
+            val oldId = oldItem.messageId
+            val newId = newItem.messageId
+            // messageId 可能缺失（部分服务器不返回），此时退化为内容指纹
+            return if (oldId != null && newId != null) {
+                oldId == newId
+            } else {
+                oldItem.from == newItem.from &&
+                        oldItem.subject == newItem.subject &&
+                        oldItem.date == newItem.date
+            }
         }
-        
+
         override fun areContentsTheSame(oldItem: EmailMessage, newItem: EmailMessage): Boolean {
             return oldItem == newItem
         }

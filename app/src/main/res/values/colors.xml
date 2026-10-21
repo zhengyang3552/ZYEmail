@@ -1,33 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    
-    <!-- 主题颜色 -->
-    <color name="primary">#FF1976D2</color>
-    <color name="primary_dark">#FF1565C0</color>
-    <color name="primary_light">#FFBBDEFB</color>
-    <color name="accent">#FF03DAC5</color>
-    
-    <!-- 文本颜色 -->
-    <color name="primary_text">#FF212121</color>
-    <color name="secondary_text">#FF757575</color>
-    <color name="icons">#FFFFFFFF</color>
-    <color name="divider">#FFBDBDBD</color>
-    
-    <!-- 邮件列表颜色 -->
-    <color name="unread_from">#FF212121</color>
-    <color name="unread_subject">#FF000000</color>
-    <color name="read_from">#FF616161</color>
-    <color name="read_subject">#FF424242</color>
-    
-    <!-- 背景颜色 -->
-    <color name="light_gray">#FFF5F5F5</color>
-    <color name="white_bg">#FFFFFFFF</color>
-    <color name="hint_text">#FF9E9E9E</color>
+<!--
+    Material 3 颜色令牌 · 浅色方案
+    ——————————————————————————————————————————————————————————————————
+    命名规则遵循 Material 3 语义化颜色角色（Color Roles）：
+      primary / on_primary                      主色及其上的内容色
+      primary_container / on_primary_container  主色的低强调容器
+      secondary / tertiary                      辅助色与强调色
+      surface / on_surface                      基础表面与其上的内容色
+      surface_container_low ~ highest           表面的层级容器（用于卡片分层）
+      surface_variant / on_surface_variant      次级表面与次级文字
+      outline / outline_variant                 描边与分隔线
+      error / success / warning                 语义状态色
+    同名 color 在 values-night/colors.xml 中提供深色对应值，
+    因此布局与样式只需引用一次语义名称，即可自动适配明暗模式。
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="UnusedResources">
+
+    <!-- ========== Primary：品牌蓝（seed #0B57D0） ========== -->
+    <color name="m3_primary">#FF0B57D0</color>
+    <color name="m3_on_primary">#FFFFFFFF</color>
+    <color name="m3_primary_container">#FFD3E3FD</color>
+    <color name="m3_on_primary_container">#FF041E49</color>
+
+    <!-- ========== Secondary：低饱和蓝灰，用于次级按钮/标签 ========== -->
+    <color name="m3_secondary">#FF3E5F8A</color>
+    <color name="m3_on_secondary">#FFFFFFFF</color>
+    <color name="m3_secondary_container">#FFD6E3FF</color>
+    <color name="m3_on_secondary_container">#FF001B3D</color>
+
+    <!-- ========== Tertiary：青绿色，用于附件/强调标记 ========== -->
+    <color name="m3_tertiary">#FF006A67</color>
+    <color name="m3_on_tertiary">#FFFFFFFF</color>
+    <color name="m3_tertiary_container">#FF9EF2ED</color>
+    <color name="m3_on_tertiary_container">#FF00201F</color>
+
+    <!-- ========== Surface：表面层级（由低到高，用于建立视觉层次） ========== -->
+    <color name="m3_surface">#FFF8FAFD</color>
+    <color name="m3_on_surface">#FF1A1C1E</color>
+    <color name="m3_surface_variant">#FFDFE2EB</color>
+    <color name="m3_on_surface_variant">#FF43474E</color>
+    <color name="m3_surface_container_lowest">#FFFFFFFF</color>
+    <color name="m3_surface_container_low">#FFF2F4F8</color>
+    <color name="m3_surface_container">#FFECEEF3</color>
+    <color name="m3_surface_container_high">#FFE6E8EE</color>
+    <color name="m3_surface_container_highest">#FFE0E3E9</color>
+    <color name="m3_surface_inverse">#FF2F3033</color>
+    <color name="m3_on_surface_inverse">#FFF1F0F4</color>
+    <color name="m3_primary_inverse">#FFA9C7FF</color>
+
+    <!-- ========== Outline：描边与分隔线 ========== -->
+    <color name="m3_outline">#FF73777F</color>
+    <color name="m3_outline_variant">#FFC3C7CF</color>
+
+    <!-- ========== 语义状态色 ========== -->
+    <color name="m3_error">#FFB3261E</color>
+    <color name="m3_on_error">#FFFFFFFF</color>
+    <color name="m3_error_container">#FFF9DEDC</color>
+    <color name="m3_on_error_container">#FF410E0B</color>
+
+    <color name="m3_success">#FF146C2E</color>
+    <color name="m3_on_success">#FFFFFFFF</color>
+    <color name="m3_success_container">#FFC4EED0</color>
+    <color name="m3_on_success_container">#FF072711</color>
+
+    <color name="m3_warning">#FF8B5000</color>
+    <color name="m3_on_warning">#FFFFFFFF</color>
+    <color name="m3_warning_container">#FFFFDCC0</color>
+    <color name="m3_on_warning_container">#FF2D1600</color>
+
+    <!-- ========== 交互叠加层（state layer / ripple） ========== -->
+    <color name="m3_ripple">#1F000000</color>
+
 </resources>

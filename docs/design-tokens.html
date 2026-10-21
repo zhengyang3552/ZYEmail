@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZYEmail · Material 3 配色与设计令牌</title>
+<style>
+  :root {
+    --page-bg: #101216;
+    --card-bg: #181B21;
+    --line: #2A2F38;
+    --text: #E6E8EE;
+    --text-dim: #9BA3AF;
+    --accent: #A9C7FF;
+    --radius-l: 24px;
+    --radius-m: 16px;
+    --radius-s: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 24px 72px;
+    background: radial-gradient(1200px 600px at 20% -10%, #1B2430 0%, var(--page-bg) 55%);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Noto Sans SC", Roboto, "Helvetica Neue", sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  header h1 { font-size: 30px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 8px; }
+  header p { color: var(--text-dim); margin: 0; font-size: 14px; max-width: 760px; }
+  .meta { display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0 36px; }
+  .tag {
+    font-size: 12px; padding: 6px 12px; border-radius: 999px;
+    background: rgba(169,199,255,.10); color: var(--accent);
+    border: 1px solid rgba(169,199,255,.22);
+  }
+  h2 { font-size: 19px; font-weight: 600; margin: 44px 0 6px; letter-spacing: -.005em; }
+  .hint { color: var(--text-dim); font-size: 13px; margin: 0 0 18px; }
+  .themes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .themes { grid-template-columns: 1fr; } }
+  .theme-card {
+    border-radius: var(--radius-l); padding: 22px;
+    border: 1px solid var(--line);
+  }
+  .theme-card.light { background: #FFFFFF; color: #1A1C1E; }
+  .theme-card.dark { background: #111318; color: #E2E2E6; }
+  .theme-card h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+  .theme-card .sub { font-size: 12px; opacity: .62; margin: 0 0 16px; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+  .chip {
+    width: 54px; height: 40px; border-radius: var(--radius-s); flex: 0 0 auto;
+    display: grid; place-items: center; font-size: 13px; font-weight: 600;
+  }
+  .chip.sm { width: 32px; height: 24px; font-size: 10px; }
+  .info { min-width: 0; }
+  .role { font-size: 13px; font-weight: 600; }
+  .hex { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 11px; opacity: .66; }
+  .use { font-size: 11px; opacity: .52; }
+  .divider { height: 1px; background: currentColor; opacity: .10; margin: 14px 0; }
+  .label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .45; margin: 16px 0 6px; }
+  .ladder { display: flex; gap: 6px; margin-top: 4px; }
+  .ladder div {
+    flex: 1; height: 42px; border-radius: 8px; border: 1px solid rgba(128,128,128,.22);
+    display: grid; place-items: center; font-size: 9px; opacity: .95;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+  td.mono { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; color: var(--text-dim); }
+  .ok { color: #6DD58C; font-weight: 600; }
+  .aa { color: #FFB865; font-weight: 600; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+  .panel { background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--radius-m); padding: 18px 20px; }
+  .panel h4 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: .02em; }
+  ul { margin: 0; padding-left: 18px; } li { font-size: 13px; color: var(--text-dim); margin: 4px 0; }
+  li b { color: var(--text); font-weight: 600; }
+  .type-row { display: flex; align-items: baseline; gap: 14px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+  .type-row:last-child { border-bottom: 0; }
+  .type-meta { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--text-dim); flex: 0 0 130px; }
+  code { background: rgba(169,199,255,.10); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+  footer { margin-top: 46px; color: var(--text-dim); font-size: 12px; border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ZYEmail · Material 3 配色与设计令牌</h1>
+    <p>以 Google Material 3 基础蓝 <code>#0B57D0</code> 为种子色（seed），推导出完整的语义化颜色角色；深浅两套方案使用同一组令牌名称，由 <code>values/</code> 与 <code>values-night/</code> 分别提供取值。</p>
+    <div class="meta">
+      <span class="tag">Theme.Material3.DayNight.NoActionBar</span>
+      <span class="tag">语义化颜色角色 · 39 项</span>
+      <span class="tag">WCAG AA 全覆盖</span>
+      <span class="tag">4dp 间距栅格</span>
+      <span class="tag">M3 Shape Scale</span>
+    </div>
+  </header>
+
+  <h2>颜色角色对照</h2>
+  <p class="hint">同一语义（如 primary）在两种模式下用不同色调承载：浅色用 tone 40 作主色、tone 90 作容器；深色反转为 tone 80 主色、tone 30 容器。</p>
+
+  <div class="themes">
+    <!-- ================= LIGHT ================= -->
+    <section class="theme-card light">
+      <h3>浅色方案</h3>
+      <p class="sub">values/colors.xml</p>
+
+      <div class="row">
+        <div class="chip" style="background:#0B57D0;color:#FFFFFF">Aa</div>
+        <div class="info"><div class="role">primary / on_primary</div><div class="hex">#0B57D0 · #FFFFFF</div><div class="use">主按钮、选中态、未读圆点</div></div>
+      </div>
+      <div class="row">
+        <div class="chip" style="background:#D3E3FD;color:#041E49">Aa</div>
+        <div class="info"><div class="role">primary_container / on_primary_container</div><div class="hex">#D3E3FD · #041E49</div><div class="use">FAB、品牌图标底、头像底</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <div class="chip" style="background:#3E5F8A;color:#FFFFFF">Aa</div>
+        <div class="info"><div class="role">secondary / on_secondary</div><div class="hex">#3E5F8A · #FFFFFF</div><div class="use">次级动作、标签</div></div>
+      </div>
+      <div class="row">
+        <div class="chip" style="background:#D6E3FF;color:#001B3D">Aa</div>
+        <div class="info"><div class="role">secondary_container / on_secondary_container</div><div class="hex">#D6E3FF · #001B3D</div><div class="use">中性提示块</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <div class="chip" style="background:#006A67;color:#FFFFFF">Aa</div>
+        <div class="info"><div class="role">tertiary / on_tertiary</div><div class="hex">#006A67 · #FFFFFF</div><div class="use">附件图标、强调标记</div></div>
+      </div>
+      <div class="row">
+        <div class="chip" style="background:#9EF2ED;color:#00201F">Aa</div>
+        <div class="info"><div class="role">tertiary_container / on_tertiary_container</div><div class="hex">#9EF2ED · #00201F</div><div class="use">附件标签底</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <div class="chip" style="background:#B3261E;color:#FFFFFF">Aa</div>
+        <div class="info"><div class="role">error / on_error</div><div class="hex">#B3261E · #FFFFFF</div><div class="use">错误操作、删除按钮</div></div>
+      </div>
+      <div class="row">
+        <div class="chip" style="background:#F9DEDC;color:#410E0B">Aa</div>
+        <div class="info"><div class="role">error_container / on_error_container</div><div class="hex">#F9DEDC · #410E0B</div><div class="use">错误横幅</div></div>
+      </div>
+
+      <div class="label">表面层级</div>
+      <div class="ladder">
+        <div style="background:#FFFFFF;color:#1A1C1E">lowest</div>
+        <div style="background:#F2F4F8;color:#1A1C1E">low</div>
+        <div style="background:#ECEEF3;color:#1A1C1E">container</div>
+        <div style="background:#E6E8EE;color:#1A1C1E">high</div>
+        <div style="background:#E0E3E9;color:#1A1C1E">highest</div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="chip sm" style="background:#F8FAFD;color:#1A1C1E">Aa</div>
+        <div class="info"><div class="hex">surface #F8FAFD · on_surface #1A1C1E · variant #DFE2EB / #43474E</div></div>
+      </div>
+      <div class="row">
+        <div class="chip sm" style="background:#FFFFFF;color:#73777F">Aa</div>
+        <div class="info"><div class="hex">outline #73777F · outline_variant #C3C7CF</div></div>
+      </div>
+    </section>
+
+    <!-- ================= DARK ================= -->
+    <section class="theme-card dark">
+      <h3>深色方案</h3>
+      <p class="sub">values-night/colors.xml</p>
+
+      <div class="row">
+        <div class="chip" style="background:#A9C7FF;color:#003062">Aa</div>
+        <div class="info"><div class="role">primary / on_primary</div><div class="hex">#A9C7FF · #003062</div><div class="use">主按钮、选中态、未读圆点</div></div>
+      </div>
+      <div class="row">
+        <div class="chip" style="background:#0842A0;color:#D3E3FD">Aa</div>
+        <div class="info"><div class="role">primary_container / on_primary_container</div><div class="hex">#0842A0 · #D3E3FD</div><div class="use">FAB、品牌图标底、头像底</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <div class="chip" style="background:#B3C7E8;color:#1C3450">Aa</div>
+        <div class="info"><div class="role">secondary / on_secondary</div><div class="hex">#B3C7E8 · #1C3450</div><div class="use">次级动作、标签</div></div>
+      </div>
+      <div class="row">
+        <div class="chip" style="background:#35496A;color:#D6E3FF">Aa</div>
+        <div class="info"><div class="role">secondary_container / on_secondary_container</div><div class="hex">#35496A · #D6E3FF</div><div class="use">中性提示块</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <div class="chip" style="background:#82D5D1;color:#003735">Aa</div>
+        <div class="info"><div class="role">tertiary / on_tertiary</div><div class="hex">#82D5D1 · #003735</div><div class="use">附件图标、强调标记</div></div>
+      </div>
+      <div class="row">
+        <div class="chip" style="background:#004F4D;color:#9EF2ED">Aa</div>
+        <div class="info"><div class="role">tertiary_container / on_tertiary_container</div><div class="hex">#004F4D · #9EF2ED</div><div class="use">附件标签底</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <div class="chip" style="background:#FFB4AB;color:#690005">Aa</div>
+        <div class="info"><div class="role">error / on_error</div><div class="hex">#FFB4AB · #690005</div><div class="use">错误操作、删除按钮</div></div>
+      </div>
+      <div class="row">
+        <div class="chip" style="background:#93000A;color:#FFDAD6">Aa</div>
+        <div class="info"><div class="role">error_container / on_error_container</div><div class="hex">#93000A · #FFDAD6</div><div class="use">错误横幅</div></div>
+      </div>
+
+      <div class="label">表面层级</div>
+      <div class="ladder">
+        <div style="background:#0C0E12;color:#E2E2E6">lowest</div>
+        <div style="background:#191C20;color:#E2E2E6">low</div>
+        <div style="background:#1D2024;color:#E2E2E6">container</div>
+        <div style="background:#282A2F;color:#E2E2E6">high</div>
+        <div style="background:#33353A;color:#E2E2E6">highest</div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="chip sm" style="background:#111318;color:#E2E2E6">Aa</div>
+        <div class="info"><div class="hex">surface #111318 · on_surface #E2E2E6 · variant #43474E / #C3C7CF</div></div>
+      </div>
+      <div class="row">
+        <div class="chip sm" style="background:#111318;color:#8D9199">Aa</div>
+        <div class="info"><div class="hex">outline #8D9199 · outline_variant #43474E</div></div>
+      </div>
+    </section>
+  </div>
+
+  <h2>语义状态色（M3 之外的业务扩展）</h2>
+  <p class="hint">Material 3 只定义 error，不定义 success / warning。邮件场景需要"发送成功""未开启 IMAP 提醒"等语义，因此按同一套色相与色调规则扩展了两组角色。</p>
+  <div class="cols">
+    <div class="panel">
+      <h4>success</h4>
+      <div class="row"><div class="chip" style="background:#146C2E;color:#FFFFFF">Aa</div><div class="info"><div class="hex">浅色 #146C2E / 容器 #C4EED0</div></div></div>
+      <div class="row"><div class="chip" style="background:#6DD58C;color:#00391A">Aa</div><div class="info"><div class="hex">深色 #6DD58C / 容器 #00522A</div></div></div>
+      <div class="use" style="font-size:12px;color:var(--text-dim)">用于发送成功提示、账户验证通过</div>
+    </div>
+    <div class="panel">
+      <h4>warning</h4>
+      <div class="row"><div class="chip" style="background:#8B5000;color:#FFFFFF">Aa</div><div class="info"><div class="hex">浅色 #8B5000 / 容器 #FFDCC0</div></div></div>
+      <div class="row"><div class="chip" style="background:#FFB865;color:#48290A">Aa</div><div class="info"><div class="hex">深色 #FFB865 / 容器 #653D00</div></div></div>
+      <div class="use" style="font-size:12px;color:var(--text-dim)">用于 HTML 渲染降级提示、配置提醒</div>
+    </div>
+  </div>
+
+  <h2>对比度实测（WCAG 2.1）</h2>
+  <p class="hint">正文文本要求 ≥ 4.5:1，图标/描边等非文本元素要求 ≥ 3:1。下表中的数值由两套 colors.xml 的实际色值计算得出。</p>
+  <table>
+    <thead>
+      <tr><th>组合</th><th>浅色</th><th>深色</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>on_primary / primary</td><td class="mono">6.39:1</td><td class="mono">7.69:1</td><td>主按钮文字</td></tr>
+      <tr><td>on_primary_container / primary_container</td><td class="mono">12.57:1</td><td class="mono">7.04:1</td><td>FAB / 头像文字</td></tr>
+      <tr><td>on_secondary / secondary</td><td class="mono">6.54:1</td><td class="mono">7.40:1</td><td>次级按钮</td></tr>
+      <tr><td>on_tertiary / tertiary</td><td class="mono">6.45:1</td><td class="mono">7.75:1</td><td>附件强调</td></tr>
+      <tr><td>on_error / error</td><td class="mono">6.54:1</td><td class="mono">7.72:1</td><td>删除 / 错误</td></tr>
+      <tr><td>on_surface / surface</td><td class="mono">16.34:1</td><td class="mono">14.38:1</td><td>正文</td></tr>
+      <tr><td>on_surface_variant / surface</td><td class="mono">8.93:1</td><td class="mono">10.96:1</td><td>次要文字</td></tr>
+      <tr><td>on_surface_variant / surface_container</td><td class="mono">8.04:1</td><td class="mono">9.65:1</td><td>未读卡片预览</td></tr>
+      <tr><td>primary / surface</td><td class="mono">6.11:1</td><td class="mono">10.88:1</td><td>链接 / 小节标题</td></tr>
+      <tr><td>outline / surface</td><td class="mono">4.30:1</td><td class="mono">5.88:1</td><td>描边（非文本，≥3:1 即达标）</td></tr>
+    </tbody>
+  </table>
+  <p class="hint" style="margin-top:10px">全部文本组合均达到 AA；浅色 outline 为 4.30:1，仅用于 1dp 描边与分隔线，满足非文本 3:1 的要求。</p>
+
+  <h2>字体层级 · 间距 · 形状</h2>
+  <div class="cols">
+    <div class="panel">
+      <h4>M3 Type Scale</h4>
+      <div class="type-row"><span class="type-meta">HeadlineSmall 24/32</span><span style="font-size:24px">登录邮箱</span></div>
+      <div class="type-row"><span class="type-meta">TitleLarge 22/28</span><span style="font-size:22px">邮件主题</span></div>
+      <div class="type-row"><span class="type-meta">TitleMedium 16/24 · 500</span><span style="font-size:16px;font-weight:500">发件人姓名</span></div>
+      <div class="type-row"><span class="type-meta">BodyLarge 16/24</span><span style="font-size:16px">邮件正文内容</span></div>
+      <div class="type-row"><span class="type-meta">BodyMedium 14/20</span><span style="font-size:14px">正文预览、说明文字</span></div>
+      <div class="type-row"><span class="type-meta">BodySmall 12/16</span><span style="font-size:12px;color:#9BA3AF">时间、地址、辅助信息</span></div>
+      <div class="type-row"><span class="type-meta">LabelLarge 14/20 · 500</span><span style="font-size:14px;font-weight:500;letter-spacing:.01em">按钮文案</span></div>
+    </div>
+    <div class="panel">
+      <h4>间距刻度（space_*）</h4>
+      <div class="ladder" style="align-items:flex-end;height:56px">
+        <div style="flex:0 0 4px;height:8px;background:#A9C7FF"></div>
+        <div style="flex:0 0 8px;height:16px;background:#A9C7FF"></div>
+        <div style="flex:0 0 12px;height:24px;background:#A9C7FF"></div>
+        <div style="flex:0 0 16px;height:32px;background:#A9C7FF"></div>
+        <div style="flex:0 0 20px;height:40px;background:#A9C7FF"></div>
+        <div style="flex:0 0 24px;height:48px;background:#A9C7FF"></div>
+        <div style="flex:0 0 32px;height:56px;background:#A9C7FF"></div>
+      </div>
+      <div class="hex" style="margin-top:6px">4 · 8 · 12 · 16 · 20 · 24 · 32（4dp 栅格）</div>
+      <h4 style="margin-top:18px">形状（Shape Scale）</h4>
+      <div class="ladder">
+        <div style="background:#282A2F;border-radius:4px;color:#9BA3AF">4</div>
+        <div style="background:#282A2F;border-radius:8px;color:#9BA3AF">8</div>
+        <div style="background:#282A2F;border-radius:12px;color:#9BA3AF">12</div>
+        <div style="background:#282A2F;border-radius:16px;color:#9BA3AF">16</div>
+        <div style="background:#282A2F;border-radius:28px;color:#9BA3AF">28</div>
+      </div>
+      <div class="hex" style="margin-top:6px">列表项 12 · 卡片 16 · 表单卡片 28</div>
+    </div>
+  </div>
+
+  <h2>角色落位</h2>
+  <div class="cols">
+    <div class="panel">
+      <h4>表面与层次</h4>
+      <ul>
+        <li><b>surface</b> 页面底色、工具栏、状态栏</li>
+        <li><b>surface_container_low</b> 已读邮件卡片、设置分组</li>
+        <li><b>surface_container</b> 未读邮件卡片（高一级，暗示"需要关注"）</li>
+        <li><b>surface_container_high</b> 对话框、进度条轨道</li>
+        <li><b>outline_variant</b> 1dp 卡片描边替代阴影（深色下阴影不可见）</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>状态与反馈</h4>
+      <ul>
+        <li><b>primary</b> 未读圆点、链接、选中单选框</li>
+        <li><b>primary_container</b> 扩展 FAB、头像底、品牌图标底</li>
+        <li><b>tertiary</b> 附件图标</li>
+        <li><b>error</b> 表单错误、删除入口、收信失败图标</li>
+        <li><b>warning_container</b> HTML 降级提示条</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>配色依据：Material 3 色调系统（Tonal Palette）— 同色相不同色调承担不同角色；深色模式不是简单反色，而是重新映射色调以保证可读性与层次。</footer>
+</div>
+</body>
+</html>

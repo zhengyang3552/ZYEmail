@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    设置页的账户条目
+    ——————————————————————————————————————————————————————————————————
+    与主界面的账户卡片区分：这里突出"管理"语义，右侧提供明确的删除入口，
+    删除按钮的触控区为 40dp 并保持与卡片内容对齐。
+-->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/space_1"
+    android:layout_marginBottom="@dimen/space_1"
+    app:cardBackgroundColor="@color/m3_surface_container_low"
+    app:cardCornerRadius="@dimen/shape_corner_large"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/m3_outline_variant"
+    app:strokeWidth="@dimen/stroke_thin">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/space_4"
+        android:paddingTop="@dimen/space_2"
+        android:paddingEnd="@dimen/space_2"
+        android:paddingBottom="@dimen/space_2">
+
+        <FrameLayout
+            android:layout_width="@dimen/icon_avatar"
+            android:layout_height="@dimen/icon_avatar"
+            android:background="@drawable/bg_logo_circle">
+
+            <ImageView
+                android:layout_width="@dimen/icon_medium"
+                android:layout_height="@dimen/icon_medium"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_email"
+                app:tint="@color/m3_primary" />
+
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_3"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.ZYEmail.TitleSmall"
+                android:textColor="@color/m3_on_surface"
+                tools:text="zhengyang@qq.com" />
+
+            <TextView
+                android:id="@+id/tvType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                android:textColor="@color/m3_on_surface_variant"
+                tools:text="SMTP / IMAP · imap.qq.com" />
+
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnDelete"
+            android:layout_width="@dimen/icon_avatar"
+            android:layout_height="@dimen/icon_avatar"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_delete_account"
+            android:src="@drawable/ic_delete"
+            app:tint="@color/m3_error" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

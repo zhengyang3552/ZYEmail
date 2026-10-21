@@ -54,3 +54,6 @@ temp/
 # Local configuration files
 app/local.properties
 !app/local.properties.example
+
+# Gradle 构建产物（AGP 8 默认输出）
+app/build/

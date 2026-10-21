@@ -1,170 +1,217 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    邮件详情页
+    ——————————————————————————————————————————————————————————————————
+    结构固定为「标题 → 发件信息 → 快捷操作 → 正文」，正文区占用剩余高度并在
+    自身内部滚动：
+      · HTML 邮件用 WebView 渲染，纯文本邮件用可滚动的 TextView 渲染，
+        两者互斥显示，避免原实现中"HTML 与纯文本同时出现"的重叠问题。
+      · 顶部信息区高度可控（主题最多 3 行），保证正文区始终有足够空间。
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/m3_surface"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:title="邮件详情"
-            app:titleTextColor="@android:color/white"
+            app:navigationContentDescription="@string/action_back"
             app:navigationIcon="@drawable/ic_arrow_back"
-            app:navigationContentDescription="返回"
-            app:menu="@menu/detail_menu" />
+            app:title="@string/detail_title" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <ScrollView
+    <!-- 主题 -->
+    <TextView
+        android:id="@+id/tvSubject"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:paddingStart="@dimen/space_4"
+        android:paddingTop="@dimen/space_2"
+        android:paddingEnd="@dimen/space_4"
+        android:textAppearance="@style/TextAppearance.ZYEmail.TitleLarge"
+        android:textColor="@color/m3_on_surface"
+        tools:text="关于下周项目评审的安排" />
+
+    <!-- 发件信息卡 -->
+    <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.ZYEmail.Card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_4"
+        android:layout_marginTop="@dimen/space_3"
+        android:layout_marginEnd="@dimen/space_4">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/space_3">
 
-            <!-- 主题 -->
             <TextView
-                android:id="@+id/tvSubject"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:id="@+id/tvAvatar"
+                android:layout_width="@dimen/icon_avatar"
+                android:layout_height="@dimen/icon_avatar"
+                android:background="@drawable/bg_avatar"
+                android:gravity="center"
+                android:textAppearance="@style/TextAppearance.ZYEmail.TitleMedium"
+                android:textColor="@color/m3_on_primary_container"
+                android:textStyle="bold"
+                tools:text="Z" />
 
-            <!-- 发件人信息 -->
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="12dp"
-                android:gravity="center_vertical"
-                android:background="@color/light_gray">
-
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/ic_person"
-                    android:contentDescription="头像"
-                    android:scaleType="centerCrop" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="12dp">
-
-                    <TextView
-                        android:id="@+id/tvFrom"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvTo"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="12sp"
-                        android:textColor="@color/secondary_text" />
-
-                </LinearLayout>
+                android:layout_marginStart="@dimen/space_3"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/tvDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="@color/secondary_text" />
-
-            </LinearLayout>
-
-            <!-- 操作按钮 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="8dp">
-
-                <Button
-                    android:id="@+id/tvReply"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="回复"
-                    android:layout_marginEnd="4dp" />
-
-                <Button
-                    android:id="@+id/tvReplyAll"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="全部回复"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp" />
-
-                <Button
-                    android:id="@+id/tvForward"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="转发"
-                    android:layout_marginStart="4dp" />
-
-            </LinearLayout>
-
-            <!-- HTML正文 -->
-            <LinearLayout
-                android:id="@+id/llHtml"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="visible">
-
-                <WebView
-                    android:id="@+id/wvBody"
+                    android:id="@+id/tvFrom"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="16dp" />
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.TitleSmall"
+                    android:textColor="@color/m3_on_surface"
+                    tools:text="张三 &lt;zhangsan@example.com&gt;" />
+
+                <TextView
+                    android:id="@+id/tvTo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                    android:textColor="@color/m3_on_surface_variant"
+                    tools:text="收件人：me@example.com" />
 
             </LinearLayout>
 
-            <!-- 纯文本正文 -->
+            <TextView
+                android:id="@+id/tvDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_2"
+                android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                android:textColor="@color/m3_on_surface_variant"
+                tools:text="2026年10月21日 10:24" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 快捷操作 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/space_4"
+        android:paddingTop="@dimen/space_3"
+        android:paddingEnd="@dimen/space_4"
+        android:paddingBottom="@dimen/space_3">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReply"
+            style="@style/Widget.ZYEmail.Button.Tonal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/space_2"
+            android:layout_weight="1"
+            android:text="@string/detail_reply"
+            app:icon="@drawable/ic_reply"
+            app:iconGravity="textStart"
+            app:iconPadding="@dimen/space_1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReplyAll"
+            style="@style/Widget.ZYEmail.Button.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/space_2"
+            android:layout_weight="1"
+            android:text="@string/detail_reply_all"
+            app:icon="@drawable/ic_reply_all"
+            app:iconGravity="textStart"
+            app:iconPadding="@dimen/space_1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnForward"
+            style="@style/Widget.ZYEmail.Button.Outlined"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/detail_forward"
+            app:icon="@drawable/ic_forward"
+            app:iconGravity="textStart"
+            app:iconPadding="@dimen/space_1" />
+
+    </LinearLayout>
+
+    <com.google.android.material.divider.MaterialDivider
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:dividerColor="@color/m3_outline_variant"
+        app:dividerThickness="@dimen/divider_thickness" />
+
+    <!-- 正文区（HTML / 纯文本互斥） -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <WebView
+            android:id="@+id/wvBody"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/m3_surface"
+            android:visibility="gone" />
+
+        <ScrollView
+            android:id="@+id/svPlain"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
             <TextView
                 android:id="@+id/tvBody"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:textSize="14sp"
-                android:lineSpacingMultiplier="1.2"
-                android:linksClickable="true"
-                android:autoLink="web" />
+                android:lineSpacingMultiplier="1.25"
+                android:padding="@dimen/space_4"
+                android:textAppearance="@style/TextAppearance.ZYEmail.BodyLarge"
+                android:textColor="@color/m3_on_surface"
+                android:textIsSelectable="true"
+                tools:text="会议定在周四下午三点，请提前准备材料。" />
 
-            <!-- 纯文本提示 -->
-            <TextView
-                android:id="@+id/tvPlain"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:text="无法加载HTML内容"
-                android:textSize="12sp"
-                android:textColor="@color/secondary_text"
-                android:visibility="gone" />
+        </ScrollView>
 
-        </LinearLayout>
+        <TextView
+            android:id="@+id/tvPlain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="@color/m3_warning_container"
+            android:padding="@dimen/space_3"
+            android:text="@string/detail_webview_failed"
+            android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+            android:textColor="@color/m3_on_warning_container"
+            android:visibility="gone" />
 
-    </ScrollView>
+    </FrameLayout>
 
 </LinearLayout>

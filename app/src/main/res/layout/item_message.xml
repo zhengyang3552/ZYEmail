@@ -1,74 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    邮件列表项
+    ——————————————————————————————————————————————————————————————————
+    信息层级（由强到弱）：发件人 → 主题 → 正文预览 → 时间，
+    并用三处信号强化"未读"：主色圆点、发件人加粗、卡片使用更高的表面层级。
+    附件用小图标而非文字标签，减少视觉噪音。
+-->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardRoot"
+    style="@style/Widget.ZYEmail.Card.Message"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="12dp"
-    android:background="?android:attr/selectableItemBackground">
+    android:layout_marginStart="@dimen/space_1"
+    android:layout_marginTop="@dimen/space_1"
+    android:layout_marginEnd="@dimen/space_1"
+    android:layout_marginBottom="@dimen/space_1"
+    android:clickable="true"
+    android:focusable="true">
 
-    <!-- 第一行：发件人和日期 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:paddingStart="@dimen/space_3"
+        android:paddingTop="@dimen/space_3"
+        android:paddingEnd="@dimen/space_3"
+        android:paddingBottom="@dimen/space_3">
 
-        <!-- 未读标记 -->
-        <View
-            android:id="@+id/ivUnread"
-            android:layout_width="8dp"
-            android:layout_height="8dp"
-            android:background="@drawable/badge_unread"
-            android:visibility="gone" />
-
+        <!-- 发件人首字母头像 -->
         <TextView
-            android:id="@+id/tvFrom"
+            android:id="@+id/tvAvatar"
+            android:layout_width="@dimen/icon_avatar"
+            android:layout_height="@dimen/icon_avatar"
+            android:background="@drawable/bg_avatar"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.ZYEmail.TitleMedium"
+            android:textColor="@color/m3_on_primary_container"
+            android:textStyle="bold"
+            tools:text="Z" />
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_3"
             android:layout_weight="1"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="@color/secondary_text" />
+            <!-- 第一行：发件人 + 时间 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <!-- 附件标记 -->
-        <ImageView
-            android:id="@+id/ivAttachment"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:src="@drawable/ic_attachment"
-            android:layout_marginStart="4dp"
-            android:visibility="gone"
-            android:contentDescription="附件" />
+                <TextView
+                    android:id="@+id/tvFrom"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.TitleSmall"
+                    android:textColor="@color/m3_on_surface"
+                    tools:text="张三" />
+
+                <TextView
+                    android:id="@+id/tvDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_2"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                    android:textColor="@color/m3_on_surface_variant"
+                    tools:text="10:24" />
+
+            </LinearLayout>
+
+            <!-- 第二行：主题 + 未读标记 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvSubject"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.BodyMedium"
+                    android:textColor="@color/m3_on_surface"
+                    tools:text="关于下周项目评审的安排" />
+
+                <View
+                    android:id="@+id/ivUnread"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginStart="@dimen/space_2"
+                    android:background="@drawable/badge_unread"
+                    android:contentDescription="@string/message_unread"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+            </LinearLayout>
+
+            <!-- 第三行：正文预览 + 附件标记 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvPreview"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                    android:textColor="@color/m3_on_surface_variant"
+                    tools:text="会议定在周四下午三点，请提前准备材料。" />
+
+                <ImageView
+                    android:id="@+id/ivAttachment"
+                    android:layout_width="@dimen/icon_small"
+                    android:layout_height="@dimen/icon_small"
+                    android:layout_marginStart="@dimen/space_2"
+                    android:contentDescription="@string/message_has_attachment"
+                    android:src="@drawable/ic_attachment"
+                    android:visibility="gone"
+                    app:tint="@color/m3_tertiary"
+                    tools:visibility="visible" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
     </LinearLayout>
 
-    <!-- 第二行：主题 -->
-    <TextView
-        android:id="@+id/tvSubject"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textSize="14sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
-    <!-- 第三行：预览 -->
-    <TextView
-        android:id="@+id/tvPreview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textSize="12sp"
-        android:textColor="@color/secondary_text"
-        android:maxLines="2"
-        android:ellipsize="end" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

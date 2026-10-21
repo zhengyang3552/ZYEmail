@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    登录页
+    ——————————————————————————————————————————————————————————————————
+    结构：品牌标识（主色容器圆形 + 细分隔线）→ 标题与副标题 → 表单卡片 → 辅助说明。
+    交互要点：
+      · 表单字段顺序符合填写习惯：邮箱 → 密码 → 显示名称（可选）
+      · 错误信息通过 TextInputLayout 的 error 态就近展示，而不是弹 Toast
+      · 主按钮保持单一（filled），次要动作用 text button，避免多主色竞争
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
@@ -8,117 +18,213 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingStart="@dimen/space_5"
+        android:paddingTop="@dimen/space_8"
+        android:paddingEnd="@dimen/space_5"
+        android:paddingBottom="@dimen/space_7">
 
-        <!-- Logo和标题 -->
-        <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:src="@drawable/ic_email"
-            android:contentDescription="邮箱图标"
-            android:layout_marginBottom="16dp" />
+        <!-- 品牌标识 -->
+        <FrameLayout
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="@drawable/bg_logo_circle">
+
+            <ImageView
+                android:layout_width="@dimen/icon_large"
+                android:layout_height="@dimen/icon_large"
+                android:layout_gravity="center"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/ic_email"
+                app:tint="@color/m3_primary" />
+
+        </FrameLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ZYEmail"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="?attr/colorPrimary"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginTop="@dimen/space_5"
+            android:text="@string/app_name"
+            android:textAppearance="@style/TextAppearance.ZYEmail.HeadlineSmall"
+            android:textColor="@color/m3_on_surface" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="邮箱客户端"
-            android:textSize="14sp"
-            android:textColor="@android:color/darker_gray"
-            android:layout_marginBottom="32dp" />
+            android:layout_marginTop="@dimen/space_1"
+            android:gravity="center"
+            android:text="@string/brand_tagline"
+            android:textAppearance="@style/TextAppearance.ZYEmail.BodyMedium"
+            android:textColor="@color/m3_on_surface_variant" />
 
-        <!-- 显示名称 -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editDisplayName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="显示名称（可选）"
-                android:inputType="textPersonName" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- 邮箱地址 -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editEmail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="邮箱地址"
-                android:inputType="textEmailAddress"
-                android:autofillHints="emailAddress" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- 密码 -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:passwordToggleEnabled="true">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="密码/授权码"
-                android:inputType="textPassword"
-                android:autofillHints="password" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- 类型提示 -->
         <TextView
-            android:id="@+id/tvTypeHint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/secondary_text"
-            android:textSize="12sp"
-            android:layout_marginBottom="24dp"
-            android:visibility="gone" />
+            android:layout_marginTop="@dimen/space_6"
+            android:text="@string/login_headline"
+            android:textAppearance="@style/TextAppearance.ZYEmail.TitleLarge"
+            android:textColor="@color/m3_on_surface" />
 
-        <!-- 登录按钮 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLogin"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="登录"
-            android:textSize="16sp"
-            android:layout_marginBottom="12dp" />
-
-        <!-- 取消按钮 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCancel"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="取消" />
+            android:layout_marginTop="@dimen/space_1"
+            android:gravity="center"
+            android:text="@string/login_subtitle"
+            android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+            android:textColor="@color/m3_on_surface_variant" />
 
-        <!-- 进度条 -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
+        <!-- 表单卡片 -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.ZYEmail.Card"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:visibility="gone" />
+            android:layout_marginTop="@dimen/space_5"
+            app:cardCornerRadius="@dimen/shape_corner_extra_large">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/space_5">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilEmail"
+                    style="@style/Widget.ZYEmail.TextInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/login_email_hint">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:autofillHints="emailAddress"
+                        android:imeOptions="actionNext"
+                        android:inputType="textEmailAddress"
+                        android:maxLines="1" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilPassword"
+                    style="@style/Widget.ZYEmail.TextInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:hint="@string/login_password_hint"
+                    app:endIconMode="password_toggle">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:autofillHints="password"
+                        android:imeOptions="actionDone"
+                        android:inputType="textPassword"
+                        android:maxLines="1" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilDisplayName"
+                    style="@style/Widget.ZYEmail.TextInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:hint="@string/login_display_name_hint">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editDisplayName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPersonName"
+                        android:maxLines="1" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- 账户类型提示 -->
+                <TextView
+                    android:id="@+id/tvTypeHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_3"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                    android:textColor="@color/m3_on_surface_variant"
+                    android:visibility="gone"
+                    tools:text="@string/login_hint_smtp"
+                    tools:visibility="visible" />
+
+                <!-- OAuth2 域名降级为应用专用密码登录的开关 -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchAppPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_3"
+                    android:minHeight="@dimen/touch_target_min"
+                    android:text="@string/login_switch_app_password"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.BodyMedium"
+                    android:textColor="@color/m3_on_surface"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLogin"
+                    style="@style/Widget.ZYEmail.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/button_height"
+                    android:layout_marginTop="@dimen/space_5"
+                    android:text="@string/login_btn" />
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/progressBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_3"
+                    android:visibility="gone"
+                    app:indicatorColor="@color/m3_primary"
+                    app:trackColor="@color/m3_surface_container_high"
+                    app:trackThickness="3dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCancel"
+                    style="@style/Widget.ZYEmail.Button.Text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_1"
+                    android:text="@string/login_cancel" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 辅助说明 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_5"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawablePadding="@dimen/space_2"
+                android:gravity="center_vertical"
+                android:text="@string/login_auth_code_tip"
+                android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                android:textColor="@color/m3_on_surface_variant" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_2"
+                android:text="@string/login_supported_providers"
+                android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                android:textColor="@color/m3_on_surface_variant" />
+
+        </LinearLayout>
 
     </LinearLayout>
+
 </ScrollView>

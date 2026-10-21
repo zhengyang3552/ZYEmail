@@ -1,184 +1,227 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    写信页
+    ——————————————————————————————————————————————————————————————————
+    布局结构：固定标题栏 → 可滚动的字段区 → 固定底部操作栏。
+    交互修正：
+      · 抄送/密送的开关 Chip 被移出被折叠的容器（原实现把开关放在
+        自身要显示的容器里，导致永远无法点击展开）
+      · 正文输入区撑满剩余高度，键盘弹出时通过 adjustResize 保证可见
+      · 发送按钮在发送期间禁用并显示进度，避免重复投递
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/m3_surface"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:title="新建邮件"
-            app:titleTextColor="@android:color/white"
+            app:navigationContentDescription="@string/action_close"
             app:navigationIcon="@drawable/ic_close"
-            app:navigationContentDescription="关闭" />
+            app:title="@string/compose_title" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingStart="@dimen/space_4"
+            android:paddingTop="@dimen/space_2"
+            android:paddingEnd="@dimen/space_4"
+            android:paddingBottom="@dimen/space_4">
 
-            <!-- 收件人 -->
-            <com.google.android.material.textfield.TextInputLayout
+            <TextView
+                android:id="@+id/tvFromAccount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                android:layout_marginBottom="@dimen/space_3"
+                android:textAppearance="@style/TextAppearance.ZYEmail.BodySmall"
+                android:textColor="@color/m3_on_surface_variant"
+                tools:text="发件账户：zhengyang@qq.com" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTo"
+                style="@style/Widget.ZYEmail.TextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/compose_to_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editTo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="收件人"
-                    android:inputType="textEmailAddress"
+                    android:imeOptions="actionNext"
+                    android:inputType="textEmailAddress|textMultiLine"
                     android:maxLines="3" />
+
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- 抄送 -->
+            <!-- 抄送 / 密送开关：位于折叠容器之外，始终可点击 -->
             <LinearLayout
-                android:id="@+id/ccLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
+                android:layout_marginTop="@dimen/space_2"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvCc"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCc"
+                    style="@style/Widget.ZYEmail.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="显示抄送"
-                    android:textSize="12sp"
-                    android:padding="8dp" />
+                    android:layout_marginEnd="@dimen/space_2"
+                    android:checkable="true"
+                    android:text="@string/compose_chip_cc" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editCc"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="抄送"
-                        android:inputType="textEmailAddress"
-                        android:maxLines="2" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
-
-            <!-- 密送 -->
-            <LinearLayout
-                android:id="@+id/bccLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <TextView
-                    android:id="@+id/tvBcc"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipBcc"
+                    style="@style/Widget.ZYEmail.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="显示密送"
-                    android:textSize="12sp"
-                    android:padding="8dp" />
+                    android:checkable="true"
+                    android:text="@string/compose_chip_bcc" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editBcc"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="密送"
-                        android:inputType="textEmailAddress"
-                        android:maxLines="2" />
-                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
-            <!-- 主题 -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilCc"
+                style="@style/Widget.ZYEmail.TextInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                android:layout_marginTop="@dimen/space_3"
+                android:hint="@string/compose_cc_hint"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editCc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="textEmailAddress|textMultiLine"
+                    android:maxLines="2" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilBcc"
+                style="@style/Widget.ZYEmail.TextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_3"
+                android:hint="@string/compose_bcc_hint"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editBcc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="textEmailAddress|textMultiLine"
+                    android:maxLines="2" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilSubject"
+                style="@style/Widget.ZYEmail.TextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_3"
+                android:hint="@string/compose_subject_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editSubject"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="主题"
-                    android:inputType="text" />
+                    android:imeOptions="actionNext"
+                    android:inputType="text"
+                    android:maxLines="1" />
+
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- 正文 -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilBody"
+                style="@style/Widget.ZYEmail.TextInput"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusTopStart="8dp">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_3"
+                android:hint="@string/compose_body_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editBody"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:gravity="top|start"
-                    android:hint="邮件正文"
-                    android:inputType="textMultiLine|textVisiblePassword"
-                    android:minLines="10" />
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:minLines="10"
+                    android:scrollbars="vertical" />
+
             </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
-    <!-- 底部按钮 -->
+    <com.google.android.material.divider.MaterialDivider
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:dividerColor="@color/m3_outline_variant"
+        app:dividerThickness="@dimen/divider_thickness" />
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:indicatorColor="@color/m3_primary"
+        app:trackColor="@color/m3_surface_container_high"
+        app:trackThickness="3dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="end|center_vertical"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:gravity="end">
+        android:paddingStart="@dimen/space_4"
+        android:paddingTop="@dimen/space_2"
+        android:paddingEnd="@dimen/space_4"
+        android:paddingBottom="@dimen/space_2">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancel"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+            style="@style/Widget.ZYEmail.Button.Text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="取消"
-            android:layout_marginEnd="8dp" />
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
+            android:layout_marginEnd="@dimen/space_2"
+            android:text="@string/action_cancel" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSend"
+            style="@style/Widget.ZYEmail.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="发送" />
+            android:text="@string/compose_send"
+            app:icon="@drawable/ic_send"
+            app:iconGravity="textStart"
+            app:iconPadding="@dimen/space_2" />
 
     </LinearLayout>
 

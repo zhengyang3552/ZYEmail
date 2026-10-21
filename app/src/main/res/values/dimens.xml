@@ -1,16 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <dimen name="text_size_small">12sp</dimen>
-    <dimen name="text_size_normal">14sp</dimen>
-    <dimen name="text_size_large">16sp</dimen>
-    <dimen name="text_size_xlarge">20sp</dimen>
-    <dimen name="margin_small">8dp</dimen>
-    <dimen name="margin_normal">16dp</dimen>
-    <dimen name="margin_large">24dp</dimen>
-    <dimen name="padding_small">8dp</dimen>
-    <dimen name="padding_normal">16dp</dimen>
-    <dimen name="padding_large">24dp</dimen>
-    <dimen name="card_radius">8dp</dimen>
-    <dimen name="icon_size">24dp</dimen>
-    <dimen name="icon_size_large">40dp</dimen>
+<!--
+    设计令牌 · 尺寸
+    ——————————————————————————————————————————————————————————————————
+    · 间距：统一采用 4dp 栅格的 8pt 派生刻度（space_*），替代原先
+      margin_small/normal/large 与 padding_small/normal/large 的混用，
+      避免出现 8/12/16/24 随机组合造成的视觉节奏断裂。
+    · 圆角：对齐 Material 3 Shape Scale
+      extra small 4 / small 8 / medium 12 / large 16 / extra large 28
+    · 字号：对齐 Material 3 Type Scale（单位 sp）
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="UnusedResources">
+
+    <!-- ========== 间距刻度（4dp 栅格） ========== -->
+    <dimen name="space_1">4dp</dimen>
+    <dimen name="space_2">8dp</dimen>
+    <dimen name="space_3">12dp</dimen>
+    <dimen name="space_4">16dp</dimen>
+    <dimen name="space_5">20dp</dimen>
+    <dimen name="space_6">24dp</dimen>
+    <dimen name="space_7">32dp</dimen>
+    <dimen name="space_8">40dp</dimen>
+    <dimen name="space_9">48dp</dimen>
+
+    <!-- ========== 圆角（M3 Shape Scale） ========== -->
+    <dimen name="shape_corner_extra_small">4dp</dimen>
+    <dimen name="shape_corner_small">8dp</dimen>
+    <dimen name="shape_corner_medium">12dp</dimen>
+    <dimen name="shape_corner_large">16dp</dimen>
+    <dimen name="shape_corner_extra_large">28dp</dimen>
+
+    <!-- ========== 图标与触控区 ========== -->
+    <dimen name="icon_small">16dp</dimen>
+    <dimen name="icon_medium">20dp</dimen>
+    <dimen name="icon_default">24dp</dimen>
+    <dimen name="icon_large">32dp</dimen>
+    <dimen name="icon_avatar">40dp</dimen>
+    <dimen name="touch_target_min">48dp</dimen>
+
+    <!-- ========== 组件尺寸 ========== -->
+    <dimen name="button_height">52dp</dimen>
+    <dimen name="list_bottom_inset">88dp</dimen>
+    <dimen name="divider_thickness">1dp</dimen>
+    <dimen name="stroke_thin">1dp</dimen>
+
+    <!-- ========== 字号（M3 Type Scale） ========== -->
+    <dimen name="text_display_small">36sp</dimen>
+    <dimen name="text_headline_medium">28sp</dimen>
+    <dimen name="text_headline_small">24sp</dimen>
+    <dimen name="text_title_large">22sp</dimen>
+    <dimen name="text_title_medium">16sp</dimen>
+    <dimen name="text_title_small">14sp</dimen>
+    <dimen name="text_body_large">16sp</dimen>
+    <dimen name="text_body_medium">14sp</dimen>
+    <dimen name="text_body_small">12sp</dimen>
+    <dimen name="text_label_large">14sp</dimen>
+    <dimen name="text_label_medium">12sp</dimen>
+    <dimen name="text_label_small">11sp</dimen>
+
 </resources>

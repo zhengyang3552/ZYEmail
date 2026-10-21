@@ -4,7 +4,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
 
     <application
         android:name=".EmailApp"
@@ -16,13 +15,11 @@
         android:theme="@style/Theme.ZYEmail"
         tools:targetApi="31">
 
-        <activity
-            android:name=".ui.activity.MainActivity"
-            android:exported="false" />
-
+        <!-- 启动页：负责判断"是否已有账户"，再决定进入主界面还是展示登录表单 -->
         <activity
             android:name=".ui.activity.LoginActivity"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -30,15 +27,22 @@
         </activity>
 
         <activity
+            android:name=".ui.activity.MainActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.activity.ComposeActivity"
+            android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".ui.activity.AccountSettingsActivity"
+            android:exported="false"
             android:parentActivityName=".ui.activity.MainActivity" />
 
         <activity
             android:name=".ui.activity.MessageDetailActivity"
+            android:exported="false"
             android:parentActivityName=".ui.activity.MainActivity" />
 
     </application>

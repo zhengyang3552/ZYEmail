@@ -1,20 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 主主题 -->
-    <style name="Theme.ZYEmail" parent="Theme.MaterialComponents.Light.DarkActionBar">
-        <!-- 主题颜色 -->
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorAccent">@color/accent</item>
-        <!-- Material Design -->
-        <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>
-        <item name="textInputStyle">@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox</item>
+
+    <!--
+        应用主题 · Material 3
+        ——————————————————————————————————————————————————————————————————
+        1. 使用 Theme.Material3.DayNight.NoActionBar：
+           DayNight 负责在 uiMode 变化时自动载入 values-night 下的令牌，
+           无需在每个界面手写两套颜色。
+        2. 主题属性的取值全部来自语义化令牌，组件（按钮、输入框、
+           对话框、Snackbar）会自动继承，保证"一套令牌、两端一致"。
+        3. 不再使用 DarkActionBar：所有页面改用 MaterialToolbar，
+           由页面自行控制标题、返回与菜单，避免深色下 ActionBar 与
+           内容区割裂。
+    -->
+    <style name="Theme.ZYEmail" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!-- ===== 颜色角色 ===== -->
+        <item name="colorPrimary">@color/m3_primary</item>
+        <item name="colorOnPrimary">@color/m3_on_primary</item>
+        <item name="colorPrimaryContainer">@color/m3_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/m3_on_primary_container</item>
+
+        <item name="colorSecondary">@color/m3_secondary</item>
+        <item name="colorOnSecondary">@color/m3_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/m3_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/m3_on_secondary_container</item>
+
+        <item name="colorTertiary">@color/m3_tertiary</item>
+        <item name="colorOnTertiary">@color/m3_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/m3_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/m3_on_tertiary_container</item>
+
+        <item name="colorError">@color/m3_error</item>
+        <item name="colorOnError">@color/m3_on_error</item>
+        <item name="colorErrorContainer">@color/m3_error_container</item>
+        <item name="colorOnErrorContainer">@color/m3_on_error_container</item>
+
+        <item name="android:colorBackground">@color/m3_surface</item>
+        <item name="colorOnBackground">@color/m3_on_surface</item>
+        <item name="colorSurface">@color/m3_surface</item>
+        <item name="colorOnSurface">@color/m3_on_surface</item>
+        <item name="colorSurfaceVariant">@color/m3_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/m3_on_surface_variant</item>
+        <item name="colorSurfaceInverse">@color/m3_surface_inverse</item>
+        <item name="colorOnSurfaceInverse">@color/m3_on_surface_inverse</item>
+        <item name="colorPrimaryInverse">@color/m3_primary_inverse</item>
+
+        <item name="colorOutline">@color/m3_outline</item>
+        <item name="colorOutlineVariant">@color/m3_outline_variant</item>
+        <item name="colorControlHighlight">@color/m3_ripple</item>
+
+        <!-- ===== 系统栏 ===== -->
+        <!-- 状态栏与内容区同色，避免深色模式下出现"黑边"断层；
+             图标明暗由 is_light_theme 布尔令牌在 values-night 中翻转 -->
+        <item name="android:windowBackground">@color/m3_surface</item>
+        <item name="android:statusBarColor">@color/m3_surface</item>
+        <item name="android:windowLightStatusBar">@bool/is_light_theme</item>
+
+        <!-- ===== 字体层级（M3 Type Scale） ===== -->
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.ZYEmail.HeadlineMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.ZYEmail.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.ZYEmail.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.ZYEmail.TitleMedium</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.ZYEmail.TitleSmall</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.ZYEmail.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.ZYEmail.BodyMedium</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.ZYEmail.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.ZYEmail.LabelLarge</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.ZYEmail.LabelMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.ZYEmail.LabelSmall</item>
+
+        <!-- ===== 形状令牌 ===== -->
+        <item name="shapeAppearanceCornerSmall">@style/ShapeAppearance.ZYEmail.Small</item>
+        <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.ZYEmail.Medium</item>
+        <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.ZYEmail.Large</item>
+
+        <!-- ===== 组件默认样式 ===== -->
+        <item name="materialButtonStyle">@style/Widget.ZYEmail.Button</item>
+        <item name="textInputStyle">@style/Widget.ZYEmail.TextInput</item>
+        <item name="toolbarStyle">@style/Widget.ZYEmail.Toolbar</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.ZYEmail.Dialog</item>
     </style>
-    
-    <!-- 无ActionBar主题（用于全屏） -->
-    <style name="Theme.ZYEmail.NoActionBar" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorAccent">@color/accent</item>
-    </style>
+
 </resources>

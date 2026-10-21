@@ -1,17 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    主界面菜单
+    ——————————————————————————————————————————————————————————————————
+    动作优先级：刷新（高频，置于栏内）→ 添加账户（次高频）→ 设置（低频，收进溢出菜单）。
+    图标在代码中按 onSurfaceVariant 统一着色，避免深色模式下白色图标不可见。
+-->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/ic_refresh"
+        android:title="@string/menu_refresh"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_add_account"
         android:icon="@drawable/ic_add"
-        android:title="添加账户"
+        android:title="@string/menu_add_account"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_settings"
-        android:title="账户设置"
-        app:showAsAction="ifRoom" />
+        android:title="@string/menu_settings"
+        app:showAsAction="never" />
 
 </menu>

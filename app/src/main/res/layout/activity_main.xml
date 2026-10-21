@@ -1,23 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    主界面
+    ——————————————————————————————————————————————————————————————————
+    布局层次：AppBarLayout（标题栏 + 进度条）→ 内容区（账户列表 / 邮件列表 /
+    空状态与错误状态二合一）→ 扩展浮动按钮。
+    视觉策略：
+      · 页面底色使用 surface，列表项使用 surface_container 系卡片，
+        通过"表面层级 + 1dp outline_variant 描边"替代阴影来表达层次，
+        在深色模式下同样成立（阴影在深色背景上几乎不可见）。
+      · 所有间距取自 space_* 令牌，列表底部预留 FAB 高度的安全间距。
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/m3_surface"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:title="ZYEmail"
-            app:titleTextColor="@android:color/white"
-            app:navigationIcon="@drawable/ic_arrow_back"
-            app:menu="@menu/main_menu" />
+            app:menu="@menu/main_menu"
+            app:title="@string/main_accounts_title" />
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:indicatorColor="@color/m3_primary"
+            app:trackColor="@color/m3_surface_container_high"
+            app:trackThickness="3dp" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -36,8 +57,12 @@
                 android:id="@+id/rvAccounts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="8dp"
-                android:clipToPadding="false" />
+                android:clipToPadding="false"
+                android:paddingStart="@dimen/space_3"
+                android:paddingTop="@dimen/space_2"
+                android:paddingEnd="@dimen/space_3"
+                android:paddingBottom="@dimen/list_bottom_inset"
+                tools:listitem="@layout/item_account" />
 
             <!-- 邮件列表 -->
             <androidx.recyclerview.widget.RecyclerView
@@ -45,31 +70,89 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
-                android:visibility="gone" />
+                android:paddingStart="@dimen/space_3"
+                android:paddingTop="@dimen/space_2"
+                android:paddingEnd="@dimen/space_3"
+                android:paddingBottom="@dimen/list_bottom_inset"
+                android:visibility="gone"
+                tools:listitem="@layout/item_message" />
 
-            <!-- 空状态 -->
-            <TextView
-                android:id="@+id/tvEmpty"
-                android:layout_width="wrap_content"
+            <!-- 空状态 / 错误状态（共用一套结构，文案与图标由代码切换） -->
+            <LinearLayout
+                android:id="@+id/emptyState"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="暂无账户"
-                android:textSize="16sp"
-                android:textColor="@color/secondary_text" />
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingStart="@dimen/space_7"
+                android:paddingEnd="@dimen/space_7"
+                android:paddingBottom="@dimen/space_7"
+                android:visibility="gone">
+
+                <FrameLayout
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:background="@drawable/bg_logo_circle">
+
+                    <ImageView
+                        android:id="@+id/ivEmptyIcon"
+                        android:layout_width="@dimen/icon_large"
+                        android:layout_height="@dimen/icon_large"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_inbox"
+                        app:tint="@color/m3_primary" />
+
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/tvEmptyTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_5"
+                    android:gravity="center"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.TitleMedium"
+                    android:textColor="@color/m3_on_surface"
+                    tools:text="@string/main_empty_accounts_title" />
+
+                <TextView
+                    android:id="@+id/tvEmptySubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_2"
+                    android:gravity="center"
+                    android:textAppearance="@style/TextAppearance.ZYEmail.BodyMedium"
+                    android:textColor="@color/m3_on_surface_variant"
+                    tools:text="@string/main_empty_accounts_desc" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEmptyAction"
+                    style="@style/Widget.ZYEmail.Button.Tonal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_5"
+                    tools:text="@string/main_empty_action_add" />
+
+            </LinearLayout>
 
         </FrameLayout>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <!-- 浮动操作按钮 - 写信 -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <!-- 写信入口：仅在浏览邮件时出现，避免在账户列表中产生误导 -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fabCompose"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_edit"
-        android:contentDescription="写信"
-        app:tint="@android:color/white" />
+        android:layout_margin="@dimen/space_4"
+        android:text="@string/main_fab_compose"
+        android:textColor="@color/m3_on_primary_container"
+        android:visibility="gone"
+        app:backgroundTint="@color/m3_primary_container"
+        app:icon="@drawable/ic_edit"
+        app:iconTint="@color/m3_on_primary_container"
+        tools:visibility="visible" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
