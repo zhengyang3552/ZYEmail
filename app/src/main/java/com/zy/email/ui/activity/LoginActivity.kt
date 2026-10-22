@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -18,6 +19,7 @@ import com.zy.email.databinding.ActivityLoginBinding
 import com.zy.email.ui.setVisible
 import com.zy.email.ui.viewmodel.LoginUiState
 import com.zy.email.ui.viewmodel.LoginViewModel
+import com.zy.email.utils.AppPrefs
 import com.zy.email.utils.EmailUtils
 import kotlinx.coroutines.launch
 
@@ -83,11 +85,25 @@ class LoginActivity : AppCompatActivity() {
             if (viewModel.state.value is LoginUiState.AwaitingAuthorization) {
                 viewModel.cancelAuthorization()
             } else {
-                // addMode：返回设置页；无账户进入：返回底下的 MainActivity
-                // （其空账户引导页提供"添加账户"入口，行为一致）
-                finish()
+                skipLogin()
             }
         }
+
+        // 非添加模式（首次启动被路由进来）下按系统返回退出，同样视为
+        // "稍后再说"：记住用户的选择，之后冷启动不再强制进入登录页
+        if (!addMode) {
+            onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    skipLogin()
+                }
+            })
+        }
+    }
+
+    /** 用户放弃本次登录：记录"已跳过"，路由不再强制进入登录页 */
+    private fun skipLogin() {
+        AppPrefs.setLoginSkipped(this, true)
+        finish()
     }
 
     private fun observeState() {
@@ -164,6 +180,8 @@ class LoginActivity : AppCompatActivity() {
     private fun onLoginSuccess() {
         // 页面即将关闭，Toast/Snackbar 都来不及展示，改为直接把结果回传给调用方
         setResult(RESULT_OK)
+        // 已有账户，清除"跳过登录"标记（路由将以账户存在为准）
+        AppPrefs.setLoginSkipped(this, false)
 
         // addMode：返回设置页；无账户进入：返回底下的 MainActivity
         // （Room 账户 Flow 发射后自动渲染账户列表，无需手动跳转）

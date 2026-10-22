@@ -28,6 +28,7 @@ import com.zy.email.ui.showSuccess
 import com.zy.email.ui.tintMenuIcons
 import com.zy.email.ui.viewmodel.MailUiState
 import com.zy.email.ui.viewmodel.MainViewModel
+import com.zy.email.utils.AppPrefs
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.launch
 
@@ -86,14 +87,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 启动路由：本页是应用入口，查询本地是否已有账户——
-     * 无账户时进入登录页（本页保留在返回栈底部，登录/取消后返回这里）；
-     * 有账户则什么都不做，账户 Flow 到达后直接渲染内容（配合磁盘缓存秒开）。
+     * 启动路由：本页是应用入口。
+     *  · 有账户 → 直接进入内容（配合磁盘缓存秒开）；
+     *  · 无账户且用户从未跳过登录 → 进入登录页（本页保留在返回栈底部）；
+     *  · 无账户但用户点过"稍后再说" → 不再强制登录，直接显示
+     *    空账户引导页（提供"添加账户"入口）。
      */
     private fun routeToLoginIfNoAccount() {
         lifecycleScope.launch {
             val hasAccount = runCatching { EmailRepository.getFirstAccount() }.getOrNull() != null
-            if (!hasAccount) {
+            if (!hasAccount && !AppPrefs.wasLoginSkipped(this@MainActivity)) {
                 startActivity(Intent(this@MainActivity, LoginActivity::class.java))
             }
         }
